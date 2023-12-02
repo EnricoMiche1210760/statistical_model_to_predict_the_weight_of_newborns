@@ -1,0 +1,24 @@
+---
+title: "Statistical Model To Predict The Weight Of Newborns"
+author: "Enrico Michelon"
+---
+
+```{r}
+
+newborns_dataset <- read.csv("data/neonati.csv")
+
+head(newborns_dataset)
+summary(newborns_dataset$Anni.madre)
+min_val <- min(newborns_dataset$Anni.madre)
+#summary return 0 as min value, meaning that there's at least one missing value. 
+#So I excluded all lines with 0 "age" to compute position, variance measures and shape measures.
+line <- which(newborns_dataset$Anni.madre == min_val)
+summary(newborns_dataset$Anni.madre[-c(line, which(newborns_dataset$Anni.madre == 1))])
+
+
+
+#install.packages("languageserver")
+# rmarkdown::render("statistical_model.Rmd")
+
+
+```
