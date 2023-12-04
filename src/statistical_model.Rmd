@@ -23,20 +23,30 @@ Peso, Lunghezza, Cranio, Tipo.parto, Ospedale and Sesso.
 ### Anni.madre
 Anni.madre is a quantitative variable on radio scale. In the dataset we have at least two outlayers, 
 which can be found at rows 1152 and 1380, and report an age of 1 and 0, respectively. 
+We decide to compute position measures and standard deviation excluding those rows, and we obtain:
+<div align="center">
+
 ```{r anni_madre_summary, results='asis', echo=FALSE}
-summary(newborns_dataset$Anni.madre)
 min_val <- min(newborns_dataset$Anni.madre)
-#summary return 0 as min value, meaning that there's at least one missing value. 
-#So I excluded all lines with 0 "age" to compute position, variance measures and shape measures.
 line <- which(newborns_dataset$Anni.madre == min_val)
-anni_madre_without_outlayers <- newborns_dataset$Anni.madre[-c(line, which(newborns_dataset$Anni.madre == 1))]
+anni_madre_without_outlayers <- newborns_dataset$Anni.madre[
+    -c(line, which(newborns_dataset$Anni.madre == 1))]
+
+sigma.anni_madre <- round(sd(newborns_dataset$Anni.madre), 2)
+
+df_sigma <- data.frame(std.dev = sigma.anni_madre)
 
 #cat("\\begin{table}[H]\n\\centering\n")
-knitr::kable(t(summary(anni_madre_without_outlayers)), format = "latex", align='c')
+knitr::kable(t(c(round(summary(anni_madre_without_outlayers), 2), df_sigma)), type="html",
+                align='c')
 #cat("\\end{table}\n")
 
 ?knitr::kable
 ```
+
+</div>
+
+
 ### N.gravidanze
 ### Fumatrici
 ### Gestazione
