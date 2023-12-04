@@ -1,24 +1,50 @@
 ---
 title: "Statistical Model To Predict The Weight Of Newborns"
 author: "Enrico Michelon"
+output:
+    pdf_document: default
 ---
 
-```{r}
-
+```{r setup, include=FALSE}
+library(dplyr) 
+```
+## Introduction
+This project concerns the creation of a statistical model to predict the weight of newborns. Our objective is to create a
+statistical model given the *neonati.csv* dataset that can be extended to the entire population.<br>
+```{r dataframe_table, results='asis', echo=FALSE}
 newborns_dataset <- read.csv("data/neonati.csv")
+knitr::kable(head(newborns_dataset), type = "latex", align='c', booktabs = TRUE)
+```
 
-head(newborns_dataset)
+## Dataset
+Studing the first rows of the dataset, we can distinguish 10 variables: Anni.madre, N.gravidanze, Fumatrici, Gestazione, 
+Peso, Lunghezza, Cranio, Tipo.parto, Ospedale and Sesso.
+
+### Anni.madre
+Anni.madre is a quantitative variable on radio scale. In the dataset we have at least two outlayers, 
+which can be found at rows 1152 and 1380, and report an age of 1 and 0, respectively. 
+```{r anni_madre_summary, results='asis', echo=FALSE}
 summary(newborns_dataset$Anni.madre)
 min_val <- min(newborns_dataset$Anni.madre)
 #summary return 0 as min value, meaning that there's at least one missing value. 
 #So I excluded all lines with 0 "age" to compute position, variance measures and shape measures.
 line <- which(newborns_dataset$Anni.madre == min_val)
-summary(newborns_dataset$Anni.madre[-c(line, which(newborns_dataset$Anni.madre == 1))])
+anni_madre_without_outlayers <- newborns_dataset$Anni.madre[-c(line, which(newborns_dataset$Anni.madre == 1))]
 
+#cat("\\begin{table}[H]\n\\centering\n")
+knitr::kable(t(summary(anni_madre_without_outlayers)), format = "latex", align='c')
+#cat("\\end{table}\n")
 
-
-#install.packages("languageserver")
-# rmarkdown::render("statistical_model.Rmd")
-
-
+?knitr::kable
 ```
+### N.gravidanze
+### Fumatrici
+### Gestazione
+### Peso
+### Lunghezza
+### Cranio
+### Tipo.parto
+### Ospedale
+### Sesso
+
+
