@@ -13,7 +13,8 @@ This project concerns the creation of a statistical model to predict the weight 
 statistical model given the *neonati.csv* dataset that can be extended to the entire population.<br>
 ```{r dataframe_table, results='asis', echo=FALSE}
 newborns_dataset <- read.csv("data/neonati.csv")
-knitr::kable(head(newborns_dataset), type = "latex", align='c', booktabs = TRUE)
+knitr::kable(head(newborns_dataset), type = "latex", align='c', booktabs = TRUE, , 
+    caption = "Dataset first rows")
 ```
 
 ## Dataset
@@ -36,12 +37,13 @@ sigma.anni_madre <- round(sd(newborns_dataset$Anni.madre), 2)
 
 df_sigma <- data.frame(std.dev = sigma.anni_madre)
 
-#cat("\\begin{table}[H]\n\\centering\n")
-knitr::kable(t(c(round(summary(anni_madre_without_outlayers), 2), df_sigma)), type="html",
-                align='c')
-#cat("\\end{table}\n")
+knitr::kable(t(c(round(summary(anni_madre_without_outlayers), 2), df_sigma)),
+    type="html", align='c', 
+    caption = "Position measures and standard deviation for Anni.madre")
 
-?knitr::kable
+?kableExtra::kable_styling
+
+
 ```
 
 </div>
