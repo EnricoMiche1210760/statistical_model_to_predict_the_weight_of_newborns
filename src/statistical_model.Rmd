@@ -65,27 +65,72 @@ knitr::kable(t(c(round(summary(newborns_dataset$N.gravidanze), 2), df_sigma)),
 
 </div>
 
-We can look now at the distribution of *N.gravidanze*.
-
+We can look now at the distribution of *N.gravidanze*. From the graphic we can notice that 
+it is a normal positive skewed distribution, with mean 0.98 and standard deviation of 1.28.
 <div align="center">
 
 ```{r n_gravidanze_density, results='asis', echo=FALSE}
 
-
 ggplot(data = newborns_dataset, 
         aes(x = N.gravidanze)) +
-  geom_density(color = 'blue', fill = 'lightblue') +
+  geom_bar(color = 'blue', fill = 'lightblue') +
   labs(title = 'Continuous Density Plot') +
   scale_x_continuous(breaks = seq(0, 13, 1)) +
   theme_minimal()
-
 ```
 
 </div>
 
-
 ### Fumatrici
+Fumatrici is a qualitative encoded variable on nominal scale, with values 0 and 1. 
+Value 0 means that the mother is not a smoker, while mothers with "Fumatrici" value of
+1 means she is a smoker. In Table 4 we can observe measures of position and standard deviation.
+<div align="center">
+
+```{r fumatrici_summary, results='asis', echo=FALSE}
+
+sigma.fumatrici <- round(sd(newborns_dataset$Fumatrici), 2)
+
+df_sigma <- data.frame(std.dev = sigma.fumatrici)   
+
+knitr::kable(t(c(round(summary(newborns_dataset$Fumatrici), 2), df_sigma)),
+    type="html", align='c', 
+    caption = "Position measures and standard deviation for Fumatrici")
+```
+</div>
+
+Media of 0.04, means that the 60% of the mothers are not smokers. We can also observe it from
+the next figure.
+```{r fumatrici_graphic, results='asis', echo=FALSE}
+
+ggplot(data = newborns_dataset, 
+        aes(y = Fumatrici)) +
+  geom_bar(color = 'blue', fill = 'lightblue') +
+  labs(title = 'Continuous Density Plot') +
+  scale_y_continuous(breaks = seq(-1, 1, 1)) +
+  theme_minimal()
+```
+</div>
+
 ### Gestazione
+Gestazione is a quantitative variable on ratio scale, with position and standard deviation measures
+that can be seen in Table 5.
+
+<div align="center">
+
+```{r gestazione_summary, results='asis', echo=FALSE}
+
+sigma.gestazione <- round(sd(newborns_dataset$Gestazione), 2)
+
+df_sigma <- data.frame(std.dev = sigma.gestazione)   
+
+knitr::kable(t(c(round(summary(newborns_dataset$Gestazione), 2), df_sigma)),
+    type="html", align='c', 
+    caption = "Position measures and standard deviation for Gestazione")
+```
+</div>
+
+
 ### Peso
 ### Lunghezza
 ### Cranio
