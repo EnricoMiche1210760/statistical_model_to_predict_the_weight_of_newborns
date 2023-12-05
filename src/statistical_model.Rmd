@@ -6,7 +6,8 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-library(dplyr) 
+library(dplyr)
+library(ggplot2)
 ```
 ## Introduction
 This project concerns the creation of a statistical model to predict the weight of newborns. Our objective is to create a
@@ -24,7 +25,7 @@ Peso, Lunghezza, Cranio, Tipo.parto, Ospedale and Sesso.
 ### Anni.madre
 Anni.madre is a quantitative variable on radio scale. In the dataset we have at least two outlayers, 
 which can be found at rows 1152 and 1380, and report an age of 1 and 0, respectively. 
-We decide to compute position measures and standard deviation excluding those rows, and we obtain:
+Computing position measures and standard deviation excluding those rows, we obtain:
 <div align="center">
 
 ```{r anni_madre_summary, results='asis', echo=FALSE}
@@ -33,23 +34,56 @@ line <- which(newborns_dataset$Anni.madre == min_val)
 anni_madre_without_outlayers <- newborns_dataset$Anni.madre[
     -c(line, which(newborns_dataset$Anni.madre == 1))]
 
-sigma.anni_madre <- round(sd(newborns_dataset$Anni.madre), 2)
+sigma.anni_madre <- round(sd(anni_madre_without_outlayers), 2)
 
 df_sigma <- data.frame(std.dev = sigma.anni_madre)
 
 knitr::kable(t(c(round(summary(anni_madre_without_outlayers), 2), df_sigma)),
     type="html", align='c', 
     caption = "Position measures and standard deviation for Anni.madre")
+```
 
-?kableExtra::kable_styling
+</div>
 
+### N.gravidanze
+N.gravidanze is a quantitative variable on ratio scale. In Table 3 position measures
+and standard deviation for the variable are shown.<br>
+We can see that mean and standard deviation and third interquartile are around 1 
+(0.98, 1.28 and 1 respectively), while the maximum reaches a value of 12.
+<div align="center">
+
+```{r n_gravidanze_summary, results='asis', echo=FALSE}
+
+sigma.n_gravidanze <- round(sd(newborns_dataset$N.gravidanze), 2)
+
+df_sigma <- data.frame(std.dev = sigma.n_gravidanze)
+
+knitr::kable(t(c(round(summary(newborns_dataset$N.gravidanze), 2), df_sigma)),
+    type="html", align='c', 
+    caption = "Position measures and standard deviation for Anni.madre")
+```
+
+</div>
+
+We can look now at the distribution of *N.gravidanze*.
+
+<div align="center">
+
+```{r n_gravidanze_density, results='asis', echo=FALSE}
+
+
+ggplot(data = newborns_dataset, 
+        aes(x = N.gravidanze)) +
+  geom_density(color = 'blue', fill = 'lightblue') +
+  labs(title = 'Continuous Density Plot') +
+  scale_x_continuous(breaks = seq(0, 13, 1)) +
+  theme_minimal()
 
 ```
 
 </div>
 
 
-### N.gravidanze
 ### Fumatrici
 ### Gestazione
 ### Peso
