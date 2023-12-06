@@ -19,8 +19,8 @@ knitr::kable(head(newborns_dataset), type = "latex", align='c', booktabs = TRUE,
 ```
 
 ## Dataset
-Studing the first rows of the dataset, we can distinguish 10 variables: Anni.madre, N.gravidanze, Fumatrici, Gestazione, 
-Peso, Lunghezza, Cranio, Tipo.parto, Ospedale and Sesso.
+The dataset is composed by 2500 samples and, studing its first rows, we can distinguish 10 variables: Anni.madre, N.gravidanze, Fumatrici, Gestazione, 
+Peso, Lunghezza, Cranio, Tipo.parto, Ospedale and Sesso. 
 
 ### Anni.madre
 Anni.madre is a quantitative variable on radio scale. In the dataset we have at least two outlayers, 
@@ -113,8 +113,10 @@ ggplot(data = newborns_dataset,
 </div>
 
 ### Gestazione
-Gestazione is a quantitative variable on ratio scale, with position and standard deviation measures
-that can be seen in Table 5.
+Gestazione is a quantitative variable on ratio scale, measured in weeks, 
+with position and standard deviation measures that can be seen in Table 5. <br>
+As we expect, the mean value is around 40 weeks (38.98), with a low standard deviation 
+of 1.87 weeks.
 
 <div align="center">
 
@@ -132,6 +134,48 @@ knitr::kable(t(c(round(summary(newborns_dataset$Gestazione), 2), df_sigma)),
 
 
 ### Peso
+Peso is a quantitative variable on ratio scale, and represents the weight of 
+newborns in grams. Position measures and standard deviation are observable in Table 6. 
+
+<div align="center">
+
+```{r peso_summary, results='asis', echo=FALSE}
+
+sigma.Peso <- round(sd(newborns_dataset$Peso), 2)
+
+df_sigma <- data.frame(std.dev = sigma.Peso)   
+
+knitr::kable(t(c(round(summary(newborns_dataset$Peso), 2), df_sigma)),
+    type="html", align='c', 
+    caption = "Position measures and standard deviation for Peso")
+
+IQR(newborns_dataset$Peso)
+```
+</div>
+
+It is interesting to note that "Peso" has in IQR value of 630 grams, while the range is 
+of 4100. This can been explained studing the graphic on Figure 3.
+The distribution is a Normal distribution, negatively skewed, with very long tails,
+expecially on the left, making a large different between IQR (represented by red line 
+on the graphic) and range.
+
+<div align="center">
+
+```{r peso_density, results='asis', echo=FALSE}
+
+plot(density(newborns_dataset$Peso), col = "blue")
+Q1 <- quantile(newborns_dataset$Peso, .25)
+Q3 <- quantile(newborns_dataset$Peso, .75)
+abline(v=Q1, col = "red")
+abline(v=Q3, col = "red")
+moments::skewness(newborns_dataset$Peso)
+
+
+
+
+```
+</div>
+
 ### Lunghezza
 ### Cranio
 ### Tipo.parto
