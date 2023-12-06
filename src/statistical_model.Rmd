@@ -8,13 +8,25 @@ output:
 ```{r setup, include=FALSE}
 library(dplyr)
 library(ggplot2)
+
+
+
+gini.index <- function(x)
+{
+  fi2 = (table(x)/length(x))^2
+  J = length(table(x))
+  gini_index = (1-sum(fi2))/((J-1)/J)
+  return(gini_index)
+}
+
+
 ```
 ## Introduction
 This project concerns the creation of a statistical model to predict the weight of newborns. Our objective is to create a
-statistical model given the *neonati.csv* dataset that can be extended to the entire population.<br>
+statistical model given the *neonati.csv* dataset that can be extended to the entire population. <br>
 ```{r dataframe_table, results='asis', echo=FALSE}
 newborns_dataset <- read.csv("data/neonati.csv")
-knitr::kable(head(newborns_dataset), type = "latex", align='c', booktabs = TRUE, , 
+knitr::kable(head(newborns_dataset), type = "latex", align='c', booktabs = TRUE,
     caption = "Dataset first rows")
 ```
 
@@ -101,15 +113,21 @@ knitr::kable(t(c(round(summary(newborns_dataset$Fumatrici), 2), df_sigma)),
 
 Media of 0.04, means that the 96% of the mothers are not smokers. We can also observe it from
 the next figure.
+
+<div align="center">
+
 ```{r fumatrici_graphic, results='asis', echo=FALSE}
 
-ggplot(data = newborns_dataset, 
-        aes(y = Fumatrici)) +
-  geom_bar(color = 'blue', fill = 'lightblue', width = 0.35,
+ggplot(data = newborns_dataset) +
+  geom_bar(aes(y = Fumatrici, 
+               fill = factor(Fumatrici)), width = 0.35,
            position = "identity") +
-  labs(title = 'Continuous Density Plot') +
+  labs(title = 'Smoker vs Not Smoker') +
+  scale_fill_manual("Smoker (0 = No, 1 = Yes):",
+                    values = c("0" = 'lightgreen', "1" = 'indianred3')) +
   scale_y_continuous(breaks = seq(0, 1, 1)) +
-  theme_minimal()
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5),legend.position = "bottom")
 ```
 </div>
 
@@ -217,7 +235,7 @@ abline(v=Q3, col = "red")
 ### Cranio
 Cranio is a quantitative variable on ratio scale. Represents the cranium diameter 
 of the newborn in millimeters. <br>
-In Table ***, we can observe position measures and standard deviation for variable "Cranio". 
+In Table 8, we can observe position measures and standard deviation for variable "Cranio". 
 
 <div align="center">
 
@@ -236,39 +254,52 @@ knitr::kable(t(c(round(summary(newborns_dataset$Cranio), 2), df_sigma)),
 
 ### Tipo.parto
 Tipo.parto is a qualitative variable on nominal scale. Represents the type of childbirth, and is encoded with 
-"Nat" (natural) and "Ces" (caesarean). For a qualitative variable we can compute Gini index, which provides
-a measure of heterogeneity.
+"Nat" (natural) and "Ces" (caesarean). For a qualitative variable we can compute Gini coefficient, which provides
+a measure of heterogeneity. Gini coefficient for "Tipo.parto" is 0.83, indicating a very high heterogeneity.
 
-<div align="center">
 ```{r tipo_parto_gini, include=FALSE}
-sigma.Cranio <- gini.index(newborns_dataset$Tipo.parto)
+gini_index.Parto <- gini.index(newborns_dataset$Tipo.parto)
 ```
-
-</div>
-
-
 
 ### Ospedale
 Ospedale is a qualitative variable on nominal scale. It represents three different hospitals, and is coded in "osp 1", 
-"osp 2" and "osp 3". The index of Gini is ******* which means that the variable is *******.
+"osp 2" and "osp 3". The Gini coefficient is very close to 1 which means that the variable is almost heterogeneous.
 
-<div align="center">
-```{r tipo_parto_gini, include=FALSE}
-sigma.Cranio <- gini.index(newborns_dataset$Ospedale)
+```{r ospedale_gini, include=FALSE}
+gini_index.Ospedale <- gini.index(newborns_dataset$Ospedale)
 ```
-
-</div>
 
 ### Sesso
 Sesso is a qualitative variable on nominal scale. Represents the sex of the newborn, and is coded with "M" for males 
-and "F" for females. The index of Gini is ******* which means that the variable is *******.
-In Figure ****** we can see the distribution of "Sesso".
+and "F" for females. The Gini coefficient is very close to 1 which means that the variable is almost heterogeneous.
+In fact in Figure ****** we can see the distribution of "Sesso".
+
+```{r sesso_gini, include=FALSE}
+gini_index.Sesso <- gini.index(newborns_dataset$Sesso)
+```
 
 <div align="center">
-```{r tipo_parto_gini, include=FALSE}
-sigma.Cranio <- gini.index(newborns_dataset$Sesso)
+
+```{r sesso_distribution, results='asis', echo=FALSE}
+
+counts <- newborns_dataset %>%
+  count(Sesso)
+
+ggplot(data = newborns_dataset) + 
+  geom_bar(aes(y = Sesso, 
+               fill = factor(Sesso)), width = 0.35,
+           position = "identity") +
+  geom_text(data = counts, aes(x = n, y = Sesso, label = n, group = Sesso), angle = -90,
+            position = position_dodge(width = 0.35), vjust = -0.5) +
+  labs(title = 'Sex classification') +
+  scale_fill_manual("Sex:",
+                    values = c("M" = 'lightblue', "F" = 'lightpink')) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5),legend.position = "bottom")
+?position_dodge
 ```
 
 </div>
+
 
 
