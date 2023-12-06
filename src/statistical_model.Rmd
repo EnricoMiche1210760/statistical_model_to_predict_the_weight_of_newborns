@@ -2,7 +2,9 @@
 title: "Statistical Model To Predict The Weight Of Newborns"
 author: "Enrico Michelon"
 output:
-    pdf_document: default
+    pdf_document:
+        toc: true
+        toc_depth: 2
 ---
 
 ```{r setup, include=FALSE}
@@ -21,16 +23,21 @@ gini.index <- function(x)
 
 
 ```
-## Introduction
+## Introduction (Point 2)
 This project concerns the creation of a statistical model to predict the weight of newborns. Our objective is to create a
 statistical model given the *neonati.csv* dataset that can be extended to the entire population. <br>
+In particular we want to find out whether it is possible to predict the infant's weight at birth given all the other variables.
+In particular, one wants to study a relationship with the mother's variables, to find out whether or not these have a
+not have a significant effect, such as the potentially harmful effect of smoking. The length and diameter of the infant's 
+skull are also used because they can be estimated already from ultrasound scans, but in general they could also serve as control 
+variables.
 ```{r dataframe_table, results='asis', echo=FALSE}
 newborns_dataset <- read.csv("data/neonati.csv")
 knitr::kable(head(newborns_dataset), type = "latex", align='c', booktabs = TRUE,
     caption = "Dataset first rows")
 ```
 
-## Dataset
+## Dataset (Points 1, 2, 3)
 The dataset is composed by 2500 samples and, studying its first rows, we can distinguish 10 variables: Anni.madre, N.gravidanze, Fumatrici, Gestazione, 
 Peso, Lunghezza, Cranio, Tipo.parto, Ospedale and Sesso. 
 
@@ -221,14 +228,12 @@ Q1 <- quantile(newborns_dataset$Lunghezza, .25)
 Q3 <- quantile(newborns_dataset$Lunghezza, .75)
 abline(v=Q1, col = "red")
 abline(v=Q3, col = "red")
-skew <- moments::skewness(newborns_dataset$Lunghezza)
-
 plot(density(newborns_dataset$Peso), col = "blue", main = "Peso distribution")
 Q1 <- quantile(newborns_dataset$Peso, .25)
 Q3 <- quantile(newborns_dataset$Peso, .75)
 abline(v=Q1, col = "red")
 abline(v=Q3, col = "red")
-
+skew <- moments::skewness(newborns_dataset$Lunghezza)
 ```
 </div>
 
@@ -296,10 +301,8 @@ ggplot(data = newborns_dataset) +
                     values = c("M" = 'lightblue', "F" = 'lightpink')) +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5),legend.position = "bottom")
-?position_dodge
 ```
 
 </div>
-
 
 
