@@ -19,7 +19,7 @@ knitr::kable(head(newborns_dataset), type = "latex", align='c', booktabs = TRUE,
 ```
 
 ## Dataset
-The dataset is composed by 2500 samples and, studing its first rows, we can distinguish 10 variables: Anni.madre, N.gravidanze, Fumatrici, Gestazione, 
+The dataset is composed by 2500 samples and, studying its first rows, we can distinguish 10 variables: Anni.madre, N.gravidanze, Fumatrici, Gestazione, 
 Peso, Lunghezza, Cranio, Tipo.parto, Ospedale and Sesso. 
 
 ### Anni.madre
@@ -99,15 +99,16 @@ knitr::kable(t(c(round(summary(newborns_dataset$Fumatrici), 2), df_sigma)),
 ```
 </div>
 
-Media of 0.04, means that the 60% of the mothers are not smokers. We can also observe it from
+Media of 0.04, means that the 96% of the mothers are not smokers. We can also observe it from
 the next figure.
 ```{r fumatrici_graphic, results='asis', echo=FALSE}
 
 ggplot(data = newborns_dataset, 
         aes(y = Fumatrici)) +
-  geom_bar(color = 'blue', fill = 'lightblue') +
+  geom_bar(color = 'blue', fill = 'lightblue', width = 0.35,
+           position = "identity") +
   labs(title = 'Continuous Density Plot') +
-  scale_y_continuous(breaks = seq(-1, 1, 1)) +
+  scale_y_continuous(breaks = seq(0, 1, 1)) +
   theme_minimal()
 ```
 </div>
@@ -148,27 +149,27 @@ df_sigma <- data.frame(std.dev = sigma.Peso)
 knitr::kable(t(c(round(summary(newborns_dataset$Peso), 2), df_sigma)),
     type="html", align='c', 
     caption = "Position measures and standard deviation for Peso")
+iqr <- IQR(newborns_dataset$Peso)
 
-IQR(newborns_dataset$Peso)
 ```
 </div>
 
 It is interesting to note that "Peso" has in IQR value of 630 grams, while the range is 
-of 4100. This can been explained studing the graphic on Figure 3.
+of 4100. This can been explained studying the graphic on Figure 3.
 The distribution is a Normal distribution, negatively skewed, with very long tails,
-expecially on the left, making a large different between IQR (represented by red line 
+specially on the left, making a large different between IQR (represented by red line 
 on the graphic) and range.
 
 <div align="center">
 
 ```{r peso_density, results='asis', echo=FALSE}
 
-plot(density(newborns_dataset$Peso), col = "blue")
+plot(density(newborns_dataset$Peso), col = "blue", , main = "Peso distribution")
 Q1 <- quantile(newborns_dataset$Peso, .25)
 Q3 <- quantile(newborns_dataset$Peso, .75)
 abline(v=Q1, col = "red")
 abline(v=Q3, col = "red")
-moments::skewness(newborns_dataset$Peso)
+skew <- moments::skewness(newborns_dataset$Peso)
 
 
 
@@ -177,9 +178,97 @@ moments::skewness(newborns_dataset$Peso)
 </div>
 
 ### Lunghezza
+Lunghezza is a quantitative variable on ratio scale. Represents the length of the newborn in millimeters.
+For this variable we expect a behaviour quite similar to variable "Peso". 
+
+<div align="center">
+
+```{r Lunghezza_summary, results='asis', echo=FALSE}
+
+sigma.Lunghezza <- round(sd(newborns_dataset$Lunghezza), 2)
+
+df_sigma <- data.frame(std.dev = sigma.Lunghezza)   
+
+knitr::kable(t(c(round(summary(newborns_dataset$Lunghezza), 2), df_sigma)),
+    type="html", align='c', 
+    caption = "Position measures and standard deviation for Lunghezza")
+```
+</div>
+
+<div align="center">
+```{r Lunghezza_density, results='asis', echo=FALSE}
+layout(matrix(c(1, 2), ncol = 2)) 
+plot(density(newborns_dataset$Lunghezza), col = "blue", main = "Lunghezza distribution")
+Q1 <- quantile(newborns_dataset$Lunghezza, .25)
+Q3 <- quantile(newborns_dataset$Lunghezza, .75)
+abline(v=Q1, col = "red")
+abline(v=Q3, col = "red")
+skew <- moments::skewness(newborns_dataset$Lunghezza)
+
+plot(density(newborns_dataset$Peso), col = "blue", main = "Peso distribution")
+Q1 <- quantile(newborns_dataset$Peso, .25)
+Q3 <- quantile(newborns_dataset$Peso, .75)
+abline(v=Q1, col = "red")
+abline(v=Q3, col = "red")
+
+```
+</div>
+
 ### Cranio
+Cranio is a quantitative variable on ratio scale. Represents the cranium diameter 
+of the newborn in millimeters. <br>
+In Table ***, we can observe position measures and standard deviation for variable "Cranio". 
+
+<div align="center">
+
+```{r cranio_summary, results='asis', echo=FALSE}
+
+sigma.Cranio <- round(sd(newborns_dataset$Cranio), 2)
+
+df_sigma <- data.frame(std.dev = sigma.Cranio)   
+
+knitr::kable(t(c(round(summary(newborns_dataset$Cranio), 2), df_sigma)),
+    type="html", align='c', 
+    caption = "Position measures and standard deviation for Cranio")
+```
+
+</div>
+
 ### Tipo.parto
+Tipo.parto is a qualitative variable on nominal scale. Represents the type of childbirth, and is encoded with 
+"Nat" (natural) and "Ces" (caesarean). For a qualitative variable we can compute Gini index, which provides
+a measure of heterogeneity.
+
+<div align="center">
+```{r tipo_parto_gini, include=FALSE}
+sigma.Cranio <- gini.index(newborns_dataset$Tipo.parto)
+```
+
+</div>
+
+
+
 ### Ospedale
+Ospedale is a qualitative variable on nominal scale. It represents three different hospitals, and is coded in "osp 1", 
+"osp 2" and "osp 3". The index of Gini is ******* which means that the variable is *******.
+
+<div align="center">
+```{r tipo_parto_gini, include=FALSE}
+sigma.Cranio <- gini.index(newborns_dataset$Ospedale)
+```
+
+</div>
+
 ### Sesso
+Sesso is a qualitative variable on nominal scale. Represents the sex of the newborn, and is coded with "M" for males 
+and "F" for females. The index of Gini is ******* which means that the variable is *******.
+In Figure ****** we can see the distribution of "Sesso".
+
+<div align="center">
+```{r tipo_parto_gini, include=FALSE}
+sigma.Cranio <- gini.index(newborns_dataset$Sesso)
+```
+
+</div>
 
 
