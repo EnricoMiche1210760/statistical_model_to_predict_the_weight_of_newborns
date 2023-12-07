@@ -189,15 +189,12 @@ on the graphic) and range.
 
 ```{r peso_density, results='asis', echo=FALSE}
 
-plot(density(newborns_dataset$Peso), col = "blue", , main = "Peso distribution")
+plot(density(newborns_dataset$Peso), col = "blue", main = "Peso distribution")
 Q1 <- quantile(newborns_dataset$Peso, .25)
 Q3 <- quantile(newborns_dataset$Peso, .75)
 abline(v=Q1, col = "red")
 abline(v=Q3, col = "red")
 skew <- moments::skewness(newborns_dataset$Peso)
-
-
-
 
 ```
 </div>
@@ -285,24 +282,29 @@ gini_index.Sesso <- gini.index(newborns_dataset$Sesso)
 
 <div align="center">
 
-```{r sesso_distribution, results='asis', echo=FALSE}
+```{r anni_madre_cl_distr, results='asis', echo=FALSE}
+N <- dim(newborns_dataset)[1]
+ni <- table(newborns_dataset$Anni.madre)
+fi <- ni/N
+Ni <- cumsum(ni)
+Fi <- Ni/N
 
-counts <- newborns_dataset %>%
-  count(Sesso)
+freq_distr <- as.data.frame(cbind(ni,fi,Ni,Fi))
 
-ggplot(data = newborns_dataset) + 
-  geom_bar(aes(y = Sesso, 
-               fill = factor(Sesso)), width = 0.35,
-           position = "identity") +
-  geom_text(data = counts, aes(x = n, y = Sesso, label = n, group = Sesso), angle = -90,
-            position = position_dodge(width = 0.35), vjust = -0.5) +
-  labs(title = 'Sex classification') +
-  scale_fill_manual("Sex:",
-                    values = c("M" = 'lightblue', "F" = 'lightpink')) +
-  theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5),legend.position = "bottom")
+barplot(freq_distr$ni,
+        ylim = c(0,240),
+        col = "aquamarine4",
+        main = "Frequency distribution of \"Anni.madre\" class",
+        names.arg = rownames(freq_distr))
+
+mtext(side=1, 
+      text="Anni.madre",
+      line=2.5,
+      cex = 1.25)
+mtext(side=2,
+      text="Absolute frequency",
+      line=2.5,
+      cex = 1.25)
 ```
-
-</div>
 
 
