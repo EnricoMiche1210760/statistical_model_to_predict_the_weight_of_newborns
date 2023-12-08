@@ -4,13 +4,14 @@ author: "Enrico Michelon"
 output:
     pdf_document:
         toc: true
-        toc_depth: 2
+        toc_depth: 3
 ---
 
 ```{r setup, include=FALSE}
 library(dplyr)
 library(ggplot2)
-
+library(grid)
+library(gridExtra)
 
 
 gini.index <- function(x)
@@ -21,6 +22,7 @@ gini.index <- function(x)
   return(gini_index)
 }
 
+figure.Number = 0
 
 ```
 ## Introduction (Point 2)
@@ -65,8 +67,8 @@ knitr::kable(t(c(round(summary(anni_madre_without_outlayers), 2), df_sigma)),
 </div>
 
 ### N.gravidanze
-N.gravidanze is a quantitative variable on ratio scale. In Table 3 position measures
-and standard deviation for the variable are shown.<br>
+N.gravidanze is a quantitative variable on ratio scale, which represents the number of pregnancy per mother.
+In Table 3 position measures and standard deviation for the variable are shown.<br>
 We can see that mean and standard deviation and third interquartile are around 1 
 (0.98, 1.28 and 1 respectively), while the maximum reaches a value of 12.
 <div align="center">
@@ -80,63 +82,62 @@ df_sigma <- data.frame(std.dev = sigma.n_gravidanze)
 knitr::kable(t(c(round(summary(newborns_dataset$N.gravidanze), 2), df_sigma)),
     type="html", align='c', 
     caption = "Position measures and standard deviation for Anni.madre")
+
 ```
 
 </div>
 
-We can look now at the distribution of *N.gravidanze*. From the graphic we can notice that 
-it is a normal positive skewed distribution, with mean 0.98 and standard deviation of 1.28.
-<div align="center">
+We can look now at the distribution of *N.gravidanze*. From Figure `r figure.Number <- figure.Number + 1; figure.Number` 
+we can notice that it is a normal positive skewed distribution, with mean 0.98 and standard deviation of 1.28.
+```{r n_gravidanze_density, results='asis', echo=FALSE, fig.align='center', fig.height=3.5, fig.width=6}
 
-```{r n_gravidanze_density, results='asis', echo=FALSE}
-
-ggplot(data = newborns_dataset, 
+density_plot <- ggplot(data = newborns_dataset, 
         aes(x = N.gravidanze)) +
-  geom_bar(color = 'blue', fill = 'lightblue') +
-  labs(title = 'Continuous Density Plot') +
-  scale_x_continuous(breaks = seq(0, 13, 1)) +
-  theme_minimal()
+  geom_bar(fill = 'seagreen2') +
+  ylab("Mothers") + 
+  xlab("Pregnancy number") +
+  scale_x_continuous(breaks = seq(0, 12, 1)) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5),
+    panel.grid.major = element_blank())
+?labs
+caption_text <- sprintf("Figure %d: N.gravidanze distribution", figure.Number)
+caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
+grid.draw(arrangeGrob(density_plot, bottom = caption_text))
 ```
-
-</div>
 
 ### Fumatrici
 Fumatrici is a qualitative encoded variable on nominal scale, with values 0 and 1. 
 Value 0 means that the mother is not a smoker, while mothers with "Fumatrici" value of
-1 means she is a smoker. In Table 4 we can observe measures of position and standard deviation.
-<div align="center">
+1 means she is a smoker. <br>
 
-```{r fumatrici_summary, results='asis', echo=FALSE}
-
-sigma.fumatrici <- round(sd(newborns_dataset$Fumatrici), 2)
-
-df_sigma <- data.frame(std.dev = sigma.fumatrici)   
-
-knitr::kable(t(c(round(summary(newborns_dataset$Fumatrici), 2), df_sigma)),
-    type="html", align='c', 
-    caption = "Position measures and standard deviation for Fumatrici")
+```{r fumatrici_summary, echo=FALSE}
+fumatrici_gini_coeff <- round(gini.index(newborns_dataset$Fumatrici), 2)
+not_smoker_percentage <- table(newborns_dataset$Fumatrici)
 ```
-</div>
 
-Media of 0.04, means that the 96% of the mothers are not smokers. We can also observe it from
-the next figure.
+Computing the Gini coefficient for the variable, we obtain a value of `r fumatrici_gini_coeff`,
+which means that the ditribution is not much equally distributed. 
+In Figure `r figure.Number <- figure.Number + 1; figure.Number`, the distribution of variable "Fumatrici" is shown.
 
-<div align="center">
-
-```{r fumatrici_graphic, results='asis', echo=FALSE}
-
-ggplot(data = newborns_dataset) +
+```{r fumatrici_graphic, results='asis', echo=FALSE, fig.align='center', fig.height=3, fig.width=5}
+smoker_plot <- ggplot(data = newborns_dataset) +
   geom_bar(aes(y = Fumatrici, 
-               fill = factor(Fumatrici)), width = 0.35,
+               fill = factor(Fumatrici)), width = 0.45,
            position = "identity") +
-  labs(title = 'Smoker vs Not Smoker') +
+  xlab("Mothers") +
+  ylab("Smoker (yes or no)") + 
   scale_fill_manual("Smoker (0 = No, 1 = Yes):",
                     values = c("0" = 'lightgreen', "1" = 'indianred3')) +
-  scale_y_continuous(breaks = seq(0, 1, 1)) +
+  scale_y_continuous(breaks = seq(0, 1, 1) ) +
   theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5),legend.position = "bottom")
+  theme(legend.position = "bottom",
+        panel.grid.major = element_blank())
+
+caption_text <- sprintf("Figure %d: Smoker vs Not Smoker", figure.Number)
+caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
+grid.draw(arrangeGrob(smoker_plot, bottom = caption_text))
 ```
-</div>
 
 ### Gestazione
 Gestazione is a quantitative variable on ratio scale, measured in weeks, 
@@ -180,24 +181,27 @@ iqr <- IQR(newborns_dataset$Peso)
 </div>
 
 It is interesting to note that "Peso" has in IQR value of 630 grams, while the range is 
-of 4100. This can been explained studying the graphic on Figure 3.
+of 4100. This can been explained studying the graphic on Figure `r figure.Number <- figure.Number + 1; figure.Number`.
 The distribution is a Normal distribution, negatively skewed, with very long tails,
 specially on the left, making a large different between IQR (represented by red line 
 on the graphic) and range.
 
-<div align="center">
-
-```{r peso_density, results='asis', echo=FALSE}
-
-plot(density(newborns_dataset$Peso), col = "blue", main = "Peso distribution")
+```{r peso_density, results='asis', fig.align='center', echo=FALSE, fig.width=5, fig.height=4}
+peso_density.plot <- plot(density(newborns_dataset$Peso), 
+            col = "blue", main = element_blank(), 
+            xlab = "Newborns weight")
 Q1 <- quantile(newborns_dataset$Peso, .25)
 Q3 <- quantile(newborns_dataset$Peso, .75)
-abline(v=Q1, col = "red")
-abline(v=Q3, col = "red")
+abline(v = Q1, col = "red")
+abline(v = Q3, col = "red")
+
+caption_text <- sprintf("Figure %d: Peso distribution", figure.Number)
+caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
+grid.draw(arrangeGrob(peso_density.plot, bottom = caption_text))
+
 skew <- moments::skewness(newborns_dataset$Peso)
 
 ```
-</div>
 
 ### Lunghezza
 Lunghezza is a quantitative variable on ratio scale. Represents the length of the newborn in millimeters.
@@ -217,22 +221,36 @@ knitr::kable(t(c(round(summary(newborns_dataset$Lunghezza), 2), df_sigma)),
 ```
 </div>
 
-<div align="center">
-```{r Lunghezza_density, results='asis', echo=FALSE}
-layout(matrix(c(1, 2), ncol = 2)) 
-plot(density(newborns_dataset$Lunghezza), col = "blue", main = "Lunghezza distribution")
-Q1 <- quantile(newborns_dataset$Lunghezza, .25)
-Q3 <- quantile(newborns_dataset$Lunghezza, .75)
-abline(v=Q1, col = "red")
-abline(v=Q3, col = "red")
-plot(density(newborns_dataset$Peso), col = "blue", main = "Peso distribution")
-Q1 <- quantile(newborns_dataset$Peso, .25)
-Q3 <- quantile(newborns_dataset$Peso, .75)
-abline(v=Q1, col = "red")
-abline(v=Q3, col = "red")
+```{r Lunghezza_density, results='asis', echo=FALSE, fig.align='center', fig.height=3}
+
+lunghezza_density.plot <- ggplot(data = newborns_dataset, aes(x = Lunghezza)) +
+                        geom_density(color = "blue") +
+                        geom_vline(xintercept = quantile(newborns_dataset$Lunghezza, 0.25), color = "red") +
+                        geom_vline(xintercept = quantile(newborns_dataset$Lunghezza, 0.75), color = "red") +
+                        labs(x = "Lunghezza", y = "Density") +
+                        theme_minimal()+
+                        theme(panel.grid.major = element_blank(),
+                            panel.grid.minor = element_blank())
+
+peso_density.plot <- ggplot(data = newborns_dataset, aes(x = Peso)) +
+                    geom_density(color = "blue") +
+                    geom_vline(xintercept = quantile(newborns_dataset$Peso, 0.25), color = "red") +
+                    geom_vline(xintercept = quantile(newborns_dataset$Peso, 0.75), color = "red") +
+                    labs(x = "Peso", y = "Density")+
+                    theme_minimal()+
+                    theme(panel.grid.major = element_blank(),
+                        panel.grid.minor = element_blank())
+
+caption_text <- sprintf("Figure %d: Lunghezza distribution vs. Peso distribution", figure.Number)
+caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
+grid.draw(arrangeGrob(lunghezza_density.plot, peso_density.plot, bottom = caption_text, ncol = 2))
+
+#TODO: DEVO METTERE GLI GLI ASSI IN NERO !!!!!
+#TOD: AGGIORNARE IL NUMERO DELLA FIGURA!!!!
+
+skew <- moments::skewness(newborns_dataset$Peso)
 skew <- moments::skewness(newborns_dataset$Lunghezza)
 ```
-</div>
 
 ### Cranio
 Cranio is a quantitative variable on ratio scale. Represents the cranium diameter 
@@ -280,9 +298,7 @@ In fact in Figure ****** we can see the distribution of "Sesso".
 gini_index.Sesso <- gini.index(newborns_dataset$Sesso)
 ```
 
-<div align="center">
-
-```{r anni_madre_cl_distr, results='asis', echo=FALSE}
+```{r anni_madre_cl_distr, results='asis', fig.align='center', echo=FALSE}
 N <- dim(newborns_dataset)[1]
 ni <- table(newborns_dataset$Anni.madre)
 fi <- ni/N
@@ -297,14 +313,14 @@ barplot(freq_distr$ni,
         main = "Frequency distribution of \"Anni.madre\" class",
         names.arg = rownames(freq_distr))
 
-mtext(side=1, 
-      text="Anni.madre",
-      line=2.5,
-      cex = 1.25)
-mtext(side=2,
-      text="Absolute frequency",
-      line=2.5,
-      cex = 1.25)
+mtext(side = 1, 
+      text = "Anni.madre",
+      line = 2.5,
+      cex  =  1.25)
+mtext(side = 2,
+      text = "Absolute frequency",
+      line = 2.5,
+      cex  =  1.25)
 ```
 
 
