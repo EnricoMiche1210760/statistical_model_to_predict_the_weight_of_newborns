@@ -247,7 +247,6 @@ caption_text <- sprintf("Figure %d: Lunghezza distribution vs. Peso distribution
 caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
 grid.draw(arrangeGrob(lunghezza_density.plot, peso_density.plot, bottom = caption_text, ncol = 2))
 
-#TOD: AGGIORNARE IL NUMERO DELLA FIGURA!!!!
 
 skew <- moments::skewness(newborns_dataset$Peso)
 skew <- moments::skewness(newborns_dataset$Lunghezza)
@@ -293,21 +292,20 @@ gini_index.Ospedale <- gini.index(newborns_dataset$Ospedale)
 ### Sesso
 Sesso is a qualitative variable on nominal scale. Represents the sex of the newborn, and is coded with "M" for males 
 and "F" for females. The Gini coefficient is very close to 1 which means that the variable is almost heterogeneous.
-
+In Figure `r figure.Number <- figure.Number + 1; figure.Number` we can see the distribution of "Sesso".
 ```{r sesso_gini, include=FALSE}
 gini_index.Sesso <- gini.index(newborns_dataset$Sesso)
 ```
 
-```{r sesso_graphic, results='asis', echo=FALSE, fig.align='center', fig.height=3, fig.width=5}
-sesso_plot <- ggplot(data = newborns_dataset) +
-  geom_bar(aes(y = Sesso, 
-               fill = factor(Sesso)), width = 0.45,
-           position = "identity") +
-  xlab("Newborns") +
-  ylab("Smoker (yes or no)") + 
-  scale_fill_manual("Sex:",
-                    values = c("M" = 'skyblue', "F" = 'pink')) +
-  scale_y_continuous(breaks = seq(0, 1, 1) ) +
+```{r sesso_graphic, results='asis', echo=FALSE, fig.align='center', fig.height=3.5, fig.width=5}
+counts <- newborns_dataset %>%
+  count(Sesso)
+
+sesso_plot <- ggplot(data = newborns_dataset) + 
+  geom_bar(aes(y = Sesso, fill = factor(Sesso)), width = 0.35, position = "identity") +
+  geom_text(data = counts, aes(x = n, y = Sesso, label = n, group = Sesso), 
+            position = position_dodge(width = 0.35), angle=-90, vjust = -0.5) +
+  scale_fill_manual("Sex:", values = c("M" = 'lightblue', "F" = 'lightpink')) +
   theme_minimal() +
   theme(legend.position = "bottom",
         panel.grid.major = element_blank())
