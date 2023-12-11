@@ -22,6 +22,21 @@ gini.index <- function(x)
   return(gini_index)
 }
 
+ggplot_density.plot <- function(dataset, variable, x_label)
+{
+  return (ggplot(data = dataset, aes(x = variable)) +
+            geom_density(color = "blue") +
+            geom_vline(xintercept = quantile(variable, 0.25), color = "red") +
+            geom_vline(xintercept = quantile(variable, 0.75), color = "red") +
+            labs(x = x_label, y = "Density") +
+            theme_minimal()+
+            theme(panel.grid.major = element_blank(),
+                panel.grid.minor = element_blank(),
+                axis.line = element_line(color = "black"))
+    )
+}
+
+
 figure.Number = 0
 
 ```
@@ -100,7 +115,7 @@ density_plot <- ggplot(data = newborns_dataset,
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5),
     panel.grid.major = element_blank())
-?labs
+
 caption_text <- sprintf("Figure %d: N.gravidanze distribution", figure.Number)
 caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
 grid.draw(arrangeGrob(density_plot, bottom = caption_text))
@@ -187,8 +202,9 @@ specially on the left, making a large different between IQR (represented by red 
 on the graphic) and range.
 
 ```{r peso_density, results='asis', fig.align='center', echo=FALSE, fig.width=5, fig.height=4}
+par(mgp = c(2, 1, 0))
 peso_density.plot <- plot(density(newborns_dataset$Peso), 
-            col = "blue", main = element_blank(), 
+            col = "blue", main = "", 
             xlab = "Newborns weight")
 Q1 <- quantile(newborns_dataset$Peso, .25)
 Q3 <- quantile(newborns_dataset$Peso, .75)
@@ -223,29 +239,14 @@ knitr::kable(t(c(round(summary(newborns_dataset$Lunghezza), 2), df_sigma)),
 
 ```{r Lunghezza_density, results='asis', echo=FALSE, fig.align='center', fig.height=3}
 
-lunghezza_density.plot <- ggplot(data = newborns_dataset, aes(x = Lunghezza)) +
-                        geom_density(color = "blue") +
-                        geom_vline(xintercept = quantile(newborns_dataset$Lunghezza, 0.25), color = "red") +
-                        geom_vline(xintercept = quantile(newborns_dataset$Lunghezza, 0.75), color = "red") +
-                        labs(x = "Lunghezza", y = "Density") +
-                        theme_minimal()+
-                        theme(panel.grid.major = element_blank(),
-                            panel.grid.minor = element_blank())
+lunghezza_density.plot <- ggplot_density.plot(newborns_dataset, newborns_dataset$Lunghezza, "Lunghezza")
 
-peso_density.plot <- ggplot(data = newborns_dataset, aes(x = Peso)) +
-                    geom_density(color = "blue") +
-                    geom_vline(xintercept = quantile(newborns_dataset$Peso, 0.25), color = "red") +
-                    geom_vline(xintercept = quantile(newborns_dataset$Peso, 0.75), color = "red") +
-                    labs(x = "Peso", y = "Density")+
-                    theme_minimal()+
-                    theme(panel.grid.major = element_blank(),
-                        panel.grid.minor = element_blank())
-
+peso_density.plot <- ggplot_density.plot(newborns_dataset, newborns_dataset$Peso, "Peso")
+figure.Number <- figure.Number + 1
 caption_text <- sprintf("Figure %d: Lunghezza distribution vs. Peso distribution", figure.Number)
 caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
 grid.draw(arrangeGrob(lunghezza_density.plot, peso_density.plot, bottom = caption_text, ncol = 2))
 
-#TODO: DEVO METTERE GLI GLI ASSI IN NERO !!!!!
 #TOD: AGGIORNARE IL NUMERO DELLA FIGURA!!!!
 
 skew <- moments::skewness(newborns_dataset$Peso)
@@ -292,13 +293,34 @@ gini_index.Ospedale <- gini.index(newborns_dataset$Ospedale)
 ### Sesso
 Sesso is a qualitative variable on nominal scale. Represents the sex of the newborn, and is coded with "M" for males 
 and "F" for females. The Gini coefficient is very close to 1 which means that the variable is almost heterogeneous.
-In fact in Figure ****** we can see the distribution of "Sesso".
 
 ```{r sesso_gini, include=FALSE}
 gini_index.Sesso <- gini.index(newborns_dataset$Sesso)
 ```
 
-```{r anni_madre_cl_distr, results='asis', fig.align='center', echo=FALSE}
+```{r sesso_graphic, results='asis', echo=FALSE, fig.align='center', fig.height=3, fig.width=5}
+sesso_plot <- ggplot(data = newborns_dataset) +
+  geom_bar(aes(y = Sesso, 
+               fill = factor(Sesso)), width = 0.45,
+           position = "identity") +
+  xlab("Newborns") +
+  ylab("Smoker (yes or no)") + 
+  scale_fill_manual("Sex:",
+                    values = c("M" = 'skyblue', "F" = 'pink')) +
+  scale_y_continuous(breaks = seq(0, 1, 1) ) +
+  theme_minimal() +
+  theme(legend.position = "bottom",
+        panel.grid.major = element_blank())
+
+caption_text <- sprintf("Figure %d: Sex distribution", figure.Number)
+caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
+grid.draw(arrangeGrob(sesso_plot, bottom = caption_text))
+```
+
+## Descriptive statistics
+In fact in Figure `r figure.Number <- figure.Number + 1; figure.Number` we can see the distribution of "Sesso".
+
+```{r anni_madre_cl_distr, results='asis', fig.align='center', echo=FALSE, fig.height=3.5}
 N <- dim(newborns_dataset)[1]
 ni <- table(newborns_dataset$Anni.madre)
 fi <- ni/N
@@ -307,20 +329,20 @@ Fi <- Ni/N
 
 freq_distr <- as.data.frame(cbind(ni,fi,Ni,Fi))
 
-barplot(freq_distr$ni,
-        ylim = c(0,240),
-        col = "aquamarine4",
-        main = "Frequency distribution of \"Anni.madre\" class",
-        names.arg = rownames(freq_distr))
+anni_madre_cl_distr <- ggplot(freq_distr, aes(x = rownames(freq_distr), y = ni)) +
+  geom_bar(stat = "identity", fill = "aquamarine4") +
+  ylim(0, 240) +
+  labs(x = "Anni.madre", y = "Absolute frequency") +
+  theme_minimal()+
+  theme(panel.grid.minor = element_blank())
 
-mtext(side = 1, 
-      text = "Anni.madre",
-      line = 2.5,
-      cex  =  1.25)
-mtext(side = 2,
-      text = "Absolute frequency",
-      line = 2.5,
-      cex  =  1.25)
+caption_text <- sprintf("Figure %d: Frequency distribution of \"Anni.madre\" class", figure.Number)
+caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
+grid.draw(arrangeGrob(anni_madre_cl_distr, bottom = caption_text))
+
 ```
+
+
+
 
 
