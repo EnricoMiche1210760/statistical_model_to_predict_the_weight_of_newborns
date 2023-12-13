@@ -82,7 +82,7 @@ knitr::kable(t(c(round(summary(anni_madre_without_outlayers), 2), df_sigma)),
 </div>
 
 ### N.gravidanze
-N.gravidanze is a quantitative variable on ratio scale, which represents the number of pregnancy per mother.
+N.gravidanze is a quantitative variable on ratio scale, which represents the number of pregnancies per mother.
 In Table 3 position measures and standard deviation for the variable are shown.<br>
 We can see that mean and standard deviation and third interquartile are around 1 
 (0.98, 1.28 and 1 respectively), while the maximum reaches a value of 12.
@@ -316,29 +316,61 @@ grid.draw(arrangeGrob(sesso_plot, bottom = caption_text))
 ```
 
 ## Descriptive statistics
-In fact in Figure `r figure.Number <- figure.Number + 1; figure.Number` we can see the distribution of "Sesso".
+We want to introduce now a short descriptive analysis of the dataset. For our porpuses, we divide
+frequency distribution of Anni.madre into classes, and we show the distribution in Figure `r figure.Number <- figure.Number + 1; figure.Number`.
 
-```{r anni_madre_cl_distr, results='asis', fig.align='center', echo=FALSE, fig.height=3.5}
-N <- dim(newborns_dataset)[1]
-ni <- table(newborns_dataset$Anni.madre)
+```{r anni_madre_cl_distr, results='asis', fig.align='center', echo=FALSE, fig.height=5, fig.width=5.5}
+Anni.madre_cl <- cut(newborns_dataset$Anni.madre, 
+                 breaks = c(min(newborns_dataset$Anni.madre), 16, 21, 26, 31, 36, max(newborns_dataset$Anni.madre)+1),
+                 include.lowest = TRUE, right = FALSE)
+
+N <- length(Anni.madre_cl)
+ni <- table(Anni.madre_cl)
 fi <- ni/N
 Ni <- cumsum(ni)
 Fi <- Ni/N
 
-freq_distr <- as.data.frame(cbind(ni,fi,Ni,Fi))
+distr_freq.Anni.madre_cl <- as.data.frame(cbind(ni, fi, Ni, Fi))
 
-anni_madre_cl_distr <- ggplot(freq_distr, aes(x = rownames(freq_distr), y = ni)) +
-  geom_bar(stat = "identity", fill = "aquamarine4") +
-  ylim(0, 240) +
-  labs(x = "Anni.madre", y = "Absolute frequency") +
-  theme_minimal()+
-  theme(panel.grid.minor = element_blank())
+anni_madre_cl_distr <- ggplot(distr_freq.Anni.madre_cl, 
+                    aes(x = rownames(distr_freq.Anni.madre_cl), y = ni, group = 1)) +
+                geom_bar(stat = "identity", fill = "tan2", width = 0.75) +
+                geom_line(col = "coral3") +
+                geom_point(col = "coral3", size = 2) +
+                geom_text(data = distr_freq.Anni.madre_cl, 
+                    aes(x = rownames(distr_freq.Anni.madre_cl), y = ni, label = ni, group = 1, vjust = -0.75)) +
+                scale_y_continuous(breaks = seq(0, 950, 100)) +
+                labs(x = "Anni.madre", y = "Absolute frequency") +
+                theme_minimal() +
+                theme(panel.grid.minor = element_blank())
+
+caption_text <- sprintf("Figure %d: Frequency distribution of \"Anni.madre\" class", figure.Number)
+caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
+grid.draw(arrangeGrob(anni_madre_cl_distr, bottom = caption_text))
+```
+
+Once obtained the distribution in classes of Anni.madre, we can see the behaviour of number of pregnancies per class of ages.
+```{r descr_stats_01, results='asis', fig.align='center', echo=FALSE, fig.height=5, fig.width=5.5}
+#merge dataset newborns and distr_freq.Anni.madre_cl
+dataset_with_class_anni_madre <- cbind(newborns_dataset, Anni.madre_cl)
+
+anni_madre_cl_distr <- ggplot(data = dataset_with_class_anni_madre,
+                        aes(x = Anni.madre_cl, fill = factor(N.gravidanze))) +
+                        geom_bar(position = "fill") +
+                        labs(x = "Mothers age", y = "N. of pregnancies", fill = "N. of Pregnancies") +
+                        theme_minimal() +
+                        theme(panel.grid.minor = element_blank(), legend.position = "bottom")
 
 caption_text <- sprintf("Figure %d: Frequency distribution of \"Anni.madre\" class", figure.Number)
 caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
 grid.draw(arrangeGrob(anni_madre_cl_distr, bottom = caption_text))
 
+#dataset_with_class_anni_madre <- dataset_with_class_anni_madre %>%
+#    group_by(Anni.madre_cl) %>%
+#    sumamrize()
+
 ```
+
 
 
 
