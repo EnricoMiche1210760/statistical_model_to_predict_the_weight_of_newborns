@@ -13,6 +13,7 @@ library(ggplot2)
 library(grid)
 library(gridExtra)
 
+setwd("/home/enrico/statistica/statistical_model_to_predict_the_weight_of_newborns/src")
 
 gini.index <- function(x)
 {
@@ -349,7 +350,7 @@ caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
 grid.draw(arrangeGrob(anni_madre_cl_distr, bottom = caption_text))
 ```
 
-Once obtained the distribution in classes of Anni.madre, we can see the behaviour of number of pregnancies per class of ages.
+Once obtained the distribution in classes of Anni.madre, we are interested in observing the trend of number of pregnancies per class of ages.
 ```{r descr_stats_01, results='asis', fig.align='center', echo=FALSE, fig.height=5, fig.width=5.5}
 #merge dataset newborns and distr_freq.Anni.madre_cl
 dataset_with_class_anni_madre <- cbind(newborns_dataset, Anni.madre_cl)
@@ -357,11 +358,12 @@ dataset_with_class_anni_madre <- cbind(newborns_dataset, Anni.madre_cl)
 anni_madre_cl_distr <- ggplot(data = dataset_with_class_anni_madre,
                         aes(x = Anni.madre_cl, fill = factor(N.gravidanze))) +
                         geom_bar(position = "fill") +
-                        labs(x = "Mothers age", y = "N. of pregnancies", fill = "N. of Pregnancies") +
+                        labs(x = "Mothers age", y = "N. of pregnancies", fill = "N. of Pregnancies:") +
                         theme_minimal() +
                         theme(panel.grid.minor = element_blank(), legend.position = "bottom")
 
-caption_text <- sprintf("Figure %d: Frequency distribution of \"Anni.madre\" class", figure.Number)
+figure.Number <- figure.Number + 1
+caption_text <- sprintf("Figure %d: N. of pregnancies per class of ages", figure.Number)
 caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
 grid.draw(arrangeGrob(anni_madre_cl_distr, bottom = caption_text))
 
@@ -370,9 +372,38 @@ grid.draw(arrangeGrob(anni_madre_cl_distr, bottom = caption_text))
 #    sumamrize()
 
 ```
+As we can see in Figure `r figure.Number` as we could expect, the number of pregnancies has an increasing trend.
+Moreover, in the classes of ages between 31 and 35, there is still more than 25% of mothers, which are waiting
+the first baby. Another interesting result is obtained observing the class of age 0-15, where a consistent percentage
+of mothers are waiting for the second baby. However, the latter statistic is somewhat misleading, as the sample of mothers 
+between the ages of 0 and 15 is obviously very small. <br>
+Computation of this statistic in general does not give us particular information. Therefore, we can proceed by observing
+the type of childbirth, subordinate to the age and the number of pregnancies. ??SMOKE?? così al momento non
+mi piace
 
+```{r descr_stats_02, results='asis', fig.align='center', echo=FALSE, fig.height=8, fig.width=5.5}
+#merge dataset newborns and distr_freq.Anni.madre_cl
 
+type_of_childbird <- dataset_with_class_anni_madre %>%
+    group_by(Anni.madre_cl, N.gravidanze) %>%
+    reframe(Tipo.parto = Tipo.parto)
 
+anni_madre_cl_distr <- ggplot(data = type_of_childbird,
+                              aes(x = N.gravidanze, fill = Tipo.parto, group = factor(Tipo.parto))) +
+                        geom_bar(position = "fill") +
+                        scale_x_continuous(labels = seq(0, 12, 1),
+                                        breaks = seq(0, 12, 1)) +
+                        labs(x = "Mother's age", y = "Proportion", fill = "Birth Type") +
+                        theme_minimal() +
+                        theme(panel.grid.minor = element_blank(), legend.position = "bottom") +
+                        facet_wrap(~ Anni.madre_cl, ncol = 1, strip.position = "right")
+
+figure.Number <- figure.Number + 1
+caption_text <- sprintf("Figure %d: N. of pregnancies per class of ages", figure.Number)
+caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
+grid.draw(arrangeGrob(anni_madre_cl_distr, bottom = caption_text))
+
+```
 
 
 
