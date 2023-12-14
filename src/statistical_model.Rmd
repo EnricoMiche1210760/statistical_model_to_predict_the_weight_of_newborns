@@ -378,32 +378,34 @@ the first baby. Another interesting result is obtained observing the class of ag
 of mothers are waiting for the second baby. However, the latter statistic is somewhat misleading, as the sample of mothers 
 between the ages of 0 and 15 is obviously very small. <br>
 Computation of this statistic in general does not give us particular information. Therefore, we can proceed by observing
-the type of childbirth, subordinate to the age and the number of pregnancies. ??SMOKE?? così al momento non
-mi piace
-
+the type of childbirth, subordinate to the age and the fact that mother smokes or not. <br>
+From Figure `r figure.Number <- figure.Number +1; figure.Number`, we can note that until the range 26-30, there seems to be
+no impact for smoker mothers with respect to non smoker mothers. On the other hand, as age passing, we note that the number
+of caesarean births decreases if the mother is a smoker. 
+We wanted to show you this statistic, to remember that great care must be taken when analysing data. In fact, this statistic
+is highly altered by the fact that the number of smoking mothers, as shown in Figure 2, is only a small 
+percentage compared to the number of non-smoking mothers.
 ```{r descr_stats_02, results='asis', fig.align='center', echo=FALSE, fig.height=8, fig.width=5.5}
 #merge dataset newborns and distr_freq.Anni.madre_cl
 
 type_of_childbird <- dataset_with_class_anni_madre %>%
-    group_by(Anni.madre_cl, N.gravidanze) %>%
+    group_by(Anni.madre_cl, Fumatrici) %>%
     reframe(Tipo.parto = Tipo.parto)
 
 anni_madre_cl_distr <- ggplot(data = type_of_childbird,
-                              aes(x = N.gravidanze, fill = Tipo.parto, group = factor(Tipo.parto))) +
-                        geom_bar(position = "fill") +
-                        scale_x_continuous(labels = seq(0, 12, 1),
-                                        breaks = seq(0, 12, 1)) +
-                        labs(x = "Mother's age", y = "Proportion", fill = "Birth Type") +
+                              aes(x = Fumatrici, fill = Tipo.parto, group = factor(Tipo.parto))) +
+                        geom_bar(position = "fill", width = 0.5) +
+                        scale_x_continuous(breaks = seq(0,1,1)) +
+                        labs(x = "Smoker (no/yes)", y = "Proportion", fill = "Birth Type") +
                         theme_minimal() +
                         theme(panel.grid.minor = element_blank(), legend.position = "bottom") +
                         facet_wrap(~ Anni.madre_cl, ncol = 1, strip.position = "right")
 
-figure.Number <- figure.Number + 1
-caption_text <- sprintf("Figure %d: N. of pregnancies per class of ages", figure.Number)
+caption_text <- sprintf("Figure %d: Birth type per class of ages, subordinates to smoker", figure.Number)
 caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
 grid.draw(arrangeGrob(anni_madre_cl_distr, bottom = caption_text))
-
 ```
 
-
+Posso fare un'altra statistica considerando i gruppi di età, le settimane di gestazione ed la grandezza del cranio.
+In questo caso dovrebbe esserci una correlazione importante.
 
