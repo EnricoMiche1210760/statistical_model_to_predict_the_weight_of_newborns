@@ -12,8 +12,8 @@ library(dplyr)
 library(ggplot2)
 library(grid)
 library(gridExtra)
-
-setwd("/home/enrmic/statistical_model_to_predict_the_weight_of_newborns/src")
+getwd()
+#setwd("/home/enrmic/statistical_model_to_predict_the_weight_of_newborns/src")
 
 gini.index <- function(x)
 {
@@ -490,13 +490,14 @@ grid.draw(arrangeGrob(anni_madre_cl_distr, bottom = caption_text))
 
 options(dplyr.summarise.inform = FALSE)
 gestazione <- newborns_dataset %>%
+    filter(Gestazione >= quantile(Gestazione, 0.25) & Gestazione <= quantile(Gestazione, 0.75))  %>%
     group_by(Sesso) %>%
-    summarise(Peso, Lunghezza, Cranio, Tipo.parto)
+    reframe(Peso, Lunghezza, Cranio, Tipo.parto)
     
 options(dplyr.summarise.inform = TRUE)
 peso_conditioned_sesso <- ggplot(data = gestazione,
                               aes(x = Sesso, y = Peso)) +
-                        geom_bar(stat = "identity") +
+                        geom_col(position = "stack") +
                         labs(x = "Weeks of pregnancy", y = "Skull circumference proportion", fill = "Skull circumference:") +
                         theme_minimal() +
                         theme(panel.grid.minor = element_blank(), legend.position = "bottom")
@@ -507,7 +508,7 @@ grid.draw(arrangeGrob(peso_conditioned_sesso, bottom = caption_text))
 
 lunghezza_conditioned_sesso <- ggplot(data = gestazione,
                               aes(x = Sesso, y = Lunghezza)) +
-                        geom_bar(stat = "identity") +
+                        geom_boxplot() +
                         labs(x = "Weeks of pregnancy", y = "Skull circumference proportion", fill = "Skull circumference:") +
                         theme_minimal() +
                         theme(panel.grid.minor = element_blank(), legend.position = "bottom")
@@ -518,7 +519,7 @@ grid.draw(arrangeGrob(lunghezza_conditioned_sesso, bottom = caption_text))
 
 cranio_conditioned_sesso <- ggplot(data = gestazione,
                               aes(x = Sesso, y = Cranio)) +
-                        geom_bar(stat = "identity") +
+                        geom_col(position = "stack") +
                         labs(x = "Weeks of pregnancy", y = "Skull circumference proportion", fill = "Skull circumference:") +
                         theme_minimal() +
                         theme(panel.grid.minor = element_blank(), legend.position = "bottom")
@@ -529,14 +530,16 @@ grid.draw(arrangeGrob(cranio_conditioned_sesso, bottom = caption_text))
 
 tipo_parto_conditioned_sesso <- ggplot(data = gestazione,
                               aes(x = Sesso, y = Tipo.parto)) +
-                        geom_bar(stat = "identity") +
+                        geom_col(position = "stack") +
                         labs(x = "Weeks of pregnancy", y = "Skull circumference proportion", fill = "Skull circumference:") +
                         theme_minimal() +
                         theme(panel.grid.minor = element_blank(), legend.position = "bottom")
 
 caption_text <- sprintf("Figure %d: Birth type per class of ages, subordinates to smoker", figure.Number)
 caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
-grid.draw(arrangeGrob(tipo_parto_conditioned_sesso, bottom = caption_text))
+grid.draw(arrangeGrob(peso_conditioned_sesso, lunghezza_conditioned_sesso, 
+        cranio_conditioned_sesso, tipo_parto_conditioned_sesso, bottom = caption_text, 
+        ncol = 2, nrow = 2))
 
 
 
