@@ -395,8 +395,12 @@ type_of_childbird <- dataset_with_class_anni_madre %>%
 anni_madre_cl_distr <- ggplot(data = type_of_childbird,
                               aes(x = Fumatrici, fill = Tipo.parto, group = factor(Tipo.parto))) +
                         geom_bar(position = "fill", width = 0.5) +
+                        scale_fill_manual("Byrth type:", 
+                              values = c("Nat" = "darkcyan",  
+                                         "Ces" = "coral"))+
+                        scale_x_continuous(breaks = seq(0,44,1)) +
                         scale_x_continuous(breaks = seq(0,1,1)) +
-                        labs(x = "Smoker (no/yes)", y = "Proportion", fill = "Birth Type:") +
+                        labs(x = "Smoker (no/yes)", y = "Proportion") +
                         theme_minimal() +
                         theme(panel.grid.minor = element_blank(), legend.position = "bottom") +
                         facet_wrap(~ Anni.madre_cl, ncol = 1, strip.position = "right")
@@ -416,7 +420,6 @@ gestazione <- dataset_with_class_anni_madre %>%
 anni_madre_cl_distr <- ggplot(data = gestazione,
                               aes(x = Gestazione, fill = Cranio, group = factor(Cranio))) +
                         geom_bar(position = "fill", width = 0.5) +
-                        scale_x_continuous(breaks = seq(0,44,1)) +
                         labs(x = "Weeks of pregnancy", y = "Skull circumference proportion", fill = "Skull circumference:") +
                         theme_minimal() +
                         theme(panel.grid.minor = element_blank(), legend.position = "bottom") +
@@ -442,7 +445,7 @@ gestazione <- newborns_dataset %>%
     summarise(Peso = round(mean(Peso)))
     
 options(dplyr.summarise.inform = TRUE)
-anni_madre_cl_distr <- ggplot(data = gestazione,
+peso_conditioned_sesso <- ggplot(data = gestazione,
                               aes(x = Gestazione, y = Peso, colour = Sesso, group = factor(Sesso))) +
                         geom_line() +
                         geom_point(size=2) +
@@ -452,7 +455,8 @@ anni_madre_cl_distr <- ggplot(data = gestazione,
 
 caption_text <- sprintf("Figure %d: Birth type per class of ages, subordinates to smoker", figure.Number)
 caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
-grid.draw(arrangeGrob(anni_madre_cl_distr, bottom = caption_text))
+grid.draw(arrangeGrob(peso_conditioned_sesso, bottom = caption_text))
+
 ```
 
 ```{r descr_stats_05, results='asis', fig.align='center', echo=FALSE, fig.height=8, fig.width=5.5}
@@ -460,7 +464,6 @@ grid.draw(arrangeGrob(anni_madre_cl_distr, bottom = caption_text))
 
 options(dplyr.summarise.inform = FALSE)
 gestazione <- dataset_with_class_anni_madre %>%
-    #filter(Gestazione >= quantile(Gestazione, 0.25) & Gestazione <= quantile(Gestazione, 0.75))  %>%
     group_by(Tipo.parto, Gestazione) %>%
     reframe(Lunghezza = mean(Lunghezza))
     
@@ -469,6 +472,9 @@ options(dplyr.summarise.inform = TRUE)
 anni_madre_cl_distr <- ggplot(data = gestazione,
                               aes(x = Gestazione, y = Lunghezza, colour = Tipo.parto, group = factor(Tipo.parto))) +
                         geom_line() +
+                        scale_color_manual("Byrth type:", 
+                              values = c("Nat" = "darkcyan",  
+                                         "Ces" = "coral"))+
                         geom_point(size=2) +
                         labs(x = "Weeks of pregnancy", y = "Skull circumference proportion", fill = "Skull circumference:") +
                         theme_minimal() +
@@ -478,6 +484,64 @@ caption_text <- sprintf("Figure %d: Birth type per class of ages, subordinates t
 caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
 grid.draw(arrangeGrob(anni_madre_cl_distr, bottom = caption_text))
 ```
+
+```{r descr_stats_06, results='asis', fig.align='center', echo=FALSE, fig.height=8, fig.width=5.5}
+#merge dataset newborns and distr_freq.Anni.madre_cl
+
+options(dplyr.summarise.inform = FALSE)
+gestazione <- newborns_dataset %>%
+    group_by(Sesso) %>%
+    summarise(Peso, Lunghezza, Cranio, Tipo.parto)
+    
+options(dplyr.summarise.inform = TRUE)
+peso_conditioned_sesso <- ggplot(data = gestazione,
+                              aes(x = Sesso, y = Peso)) +
+                        geom_bar(stat = "identity") +
+                        labs(x = "Weeks of pregnancy", y = "Skull circumference proportion", fill = "Skull circumference:") +
+                        theme_minimal() +
+                        theme(panel.grid.minor = element_blank(), legend.position = "bottom")
+
+caption_text <- sprintf("Figure %d: Birth type per class of ages, subordinates to smoker", figure.Number)
+caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
+grid.draw(arrangeGrob(peso_conditioned_sesso, bottom = caption_text))
+
+lunghezza_conditioned_sesso <- ggplot(data = gestazione,
+                              aes(x = Sesso, y = Lunghezza)) +
+                        geom_bar(stat = "identity") +
+                        labs(x = "Weeks of pregnancy", y = "Skull circumference proportion", fill = "Skull circumference:") +
+                        theme_minimal() +
+                        theme(panel.grid.minor = element_blank(), legend.position = "bottom")
+
+caption_text <- sprintf("Figure %d: Birth type per class of ages, subordinates to smoker", figure.Number)
+caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
+grid.draw(arrangeGrob(lunghezza_conditioned_sesso, bottom = caption_text))
+
+cranio_conditioned_sesso <- ggplot(data = gestazione,
+                              aes(x = Sesso, y = Cranio)) +
+                        geom_bar(stat = "identity") +
+                        labs(x = "Weeks of pregnancy", y = "Skull circumference proportion", fill = "Skull circumference:") +
+                        theme_minimal() +
+                        theme(panel.grid.minor = element_blank(), legend.position = "bottom")
+
+caption_text <- sprintf("Figure %d: Birth type per class of ages, subordinates to smoker", figure.Number)
+caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
+grid.draw(arrangeGrob(cranio_conditioned_sesso, bottom = caption_text))
+
+tipo_parto_conditioned_sesso <- ggplot(data = gestazione,
+                              aes(x = Sesso, y = Tipo.parto)) +
+                        geom_bar(stat = "identity") +
+                        labs(x = "Weeks of pregnancy", y = "Skull circumference proportion", fill = "Skull circumference:") +
+                        theme_minimal() +
+                        theme(panel.grid.minor = element_blank(), legend.position = "bottom")
+
+caption_text <- sprintf("Figure %d: Birth type per class of ages, subordinates to smoker", figure.Number)
+caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
+grid.draw(arrangeGrob(tipo_parto_conditioned_sesso, bottom = caption_text))
+
+
+
+```
+
 
 
 Posso fare un'altra statistica considerando i gruppi di età, le settimane di gestazione ed la grandezza del cranio.
