@@ -291,7 +291,7 @@ gini_index.Ospedale <- gini.index(newborns_dataset$Ospedale)
 ```
 
 ### Sesso
-Sesso is a qualitative variable on nominal scale. Represents the sex of the newborn, and is coded with "M" for males 
+Sesso is a qualitative variable on nominal scale. Represents the gender of the newborn, and is coded with "M" for males 
 and "F" for females. The Gini coefficient is very close to 1 which means that the variable is almost heterogeneous.
 In Figure `r figure.Number <- figure.Number + 1; figure.Number` we can see the distribution of "Sesso".
 ```{r sesso_gini, include=FALSE}
@@ -306,21 +306,21 @@ sesso_plot <- ggplot(data = newborns_dataset) +
   geom_bar(aes(y = Sesso, fill = factor(Sesso)), width = 0.35, position = "identity") +
   geom_text(data = counts, aes(x = n, y = Sesso, label = n, group = Sesso), 
             position = position_dodge(width = 0.35), angle=-90, vjust = -0.5) +
-  scale_fill_manual("Sex:", values = c("M" = 'lightblue', "F" = 'lightpink')) +
+  scale_fill_manual("Gender:", values = c("M" = 'lightblue', "F" = 'lightpink')) +
   theme_minimal() +
   theme(legend.position = "bottom",
         panel.grid.major = element_blank())
 
-caption_text <- sprintf("Figure %d: Sex distribution", figure.Number)
+caption_text <- sprintf("Figure %d: Gender distribution", figure.Number)
 caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
 grid.draw(arrangeGrob(sesso_plot, bottom = caption_text))
 ```
 
-## Descriptive statistics
+## Descriptive statistics (Points 3, 5)
 We want to introduce now a short descriptive analysis of the dataset. For our porpuses, we divide
 frequency distribution of Anni.madre into classes, and we show the distribution in Figure `r figure.Number <- figure.Number + 1; figure.Number`.
 
-```{r anni_madre_cl_distr, results='asis', fig.align='center', echo=FALSE, fig.height=5, fig.width=5.5}
+```{r anni_madre_cl_distr, results='asis', fig.align='center', echo=FALSE, fig.height=4.5, fig.width=4}
 Anni.madre_cl <- cut(newborns_dataset$Anni.madre, 
                  breaks = c(min(newborns_dataset$Anni.madre), 16, 21, 26, 31, 36, max(newborns_dataset$Anni.madre)+1),
                  include.lowest = TRUE, right = FALSE)
@@ -339,7 +339,7 @@ anni_madre_cl_distr <- ggplot(distr_freq.Anni.madre_cl,
                 geom_line(col = "coral3") +
                 geom_point(col = "coral3", size = 2) +
                 geom_text(data = distr_freq.Anni.madre_cl, 
-                    aes(x = rownames(distr_freq.Anni.madre_cl), y = ni, label = ni, group = 1, vjust = -0.75)) +
+                    aes(x = rownames(distr_freq.Anni.madre_cl), y = ni, label = ni, group = 1, vjust = -0.5)) +
                 scale_y_continuous(breaks = seq(0, 950, 100)) +
                 labs(x = "Anni.madre", y = "Absolute frequency") +
                 theme_minimal() +
@@ -351,8 +351,7 @@ grid.draw(arrangeGrob(anni_madre_cl_distr, bottom = caption_text))
 ```
 
 Once obtained the distribution in classes of Anni.madre, we are interested in observing the trend of number of pregnancies per class of ages.
-```{r descr_stats_01, results='asis', fig.align='center', echo=FALSE, fig.height=5, fig.width=5.5}
-#merge dataset newborns and distr_freq.Anni.madre_cl
+```{r descr_stats_01, results='asis', fig.align='center', echo=FALSE, fig.height=3, fig.width=4.5}
 dataset_with_class_anni_madre <- cbind(newborns_dataset, Anni.madre_cl)
 
 anni_madre_cl_distr <- ggplot(data = dataset_with_class_anni_madre,
@@ -367,10 +366,6 @@ caption_text <- sprintf("Figure %d: N. of pregnancies per class of ages", figure
 caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
 grid.draw(arrangeGrob(anni_madre_cl_distr, bottom = caption_text))
 
-#dataset_with_class_anni_madre <- dataset_with_class_anni_madre %>%
-#    group_by(Anni.madre_cl) %>%
-#    sumamrize()
-
 ```
 As we can see in Figure `r figure.Number` as we could expect, the number of pregnancies has an increasing trend.
 Moreover, in the classes of ages between 31 and 35, there is still more than 25% of mothers, which are waiting
@@ -381,12 +376,8 @@ Computation of this statistic in general does not give us particular information
 the type of childbirth, subordinate to the age and the fact that mother smokes or not. <br>
 From Figure `r figure.Number <- figure.Number +1; figure.Number`, we can note that until the range 26-30, there seems to be
 no impact for smoker mothers with respect to non smoker mothers. On the other hand, as age passing, we note that the number
-of caesarean births decreases if the mother is a smoker. 
-We wanted to show you this statistic, to remember that great care must be taken when analysing data. In fact, this statistic
-is highly altered by the fact that the number of smoking mothers, as shown in Figure 2, is only a small 
-percentage compared to the number of non-smoking mothers.
-```{r descr_stats_02, results='asis', fig.align='center', echo=FALSE, fig.height=8, fig.width=5.5}
-#merge dataset newborns and distr_freq.Anni.madre_cl
+of caesarean births decreases if the mother is a smoker, which is really strange. However we wanted to show you this statistic, to remember that great care must be taken when analysing data. In fact, this statistic is highly altered by the fact that the number of smoking mothers, as shown in Figure 2, is only a small percentage compared to the number of non-smoking mothers.
+```{r descr_stats_02, results='asis', fig.align='center', echo=FALSE, fig.height=6.5, fig.width=5}
 
 type_of_childbird <- dataset_with_class_anni_madre %>%
     group_by(Anni.madre_cl, Fumatrici) %>%
@@ -398,9 +389,8 @@ anni_madre_cl_distr <- ggplot(data = type_of_childbird,
                         scale_fill_manual("Byrth type:", 
                               values = c("Nat" = "darkcyan",  
                                          "Ces" = "coral"))+
-                        scale_x_continuous(breaks = seq(0,44,1)) +
                         scale_x_continuous(breaks = seq(0,1,1)) +
-                        labs(x = "Smoker (no/yes)", y = "Proportion") +
+                        labs(x = "Smoker (no/yes)", y = "Proportion of natural and caesarean births") +
                         theme_minimal() +
                         theme(panel.grid.minor = element_blank(), legend.position = "bottom") +
                         facet_wrap(~ Anni.madre_cl, ncol = 1, strip.position = "right")
@@ -409,10 +399,9 @@ caption_text <- sprintf("Figure %d: Birth type per class of ages, subordinates t
 caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
 grid.draw(arrangeGrob(anni_madre_cl_distr, bottom = caption_text))
 ```
-
-```{r descr_stats_03, results='asis', fig.align='center', echo=FALSE, fig.height=8, fig.width=5.5}
-#merge dataset newborns and distr_freq.Anni.madre_cl
-
+We want now to analyse the skull circumference with respect to pregnancy and class of ages of mothers.  From Figure `r figure.Number <- figure.Number +1; figure.Number`, we can observe that the class of ages does not significantly affect the skull circumference, 
+whereas, as expected, weeks of gestation significantly affect skull size. Later on, we will analyse how and whether gender affects the size of the fetus' skull.
+```{r descr_stats_03, results='asis', fig.align='center', echo=FALSE, fig.height=7.5, fig.width=5.5}
 gestazione <- dataset_with_class_anni_madre %>%
     group_by(Anni.madre_cl, Gestazione) %>%
     reframe(Cranio = Cranio)
@@ -425,16 +414,15 @@ anni_madre_cl_distr <- ggplot(data = gestazione,
                         theme(panel.grid.minor = element_blank(), legend.position = "bottom") +
                         facet_wrap(~ Anni.madre_cl, ncol = 1, strip.position = "right")
 
-caption_text <- sprintf("Figure %d: Birth type per class of ages, subordinates to smoker", figure.Number)
+caption_text <- sprintf("Figure %d: Skull circumference, subordinates to weeks of pregnancy and class of ages", figure.Number)
 caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
 grid.draw(arrangeGrob(anni_madre_cl_distr, bottom = caption_text))
 ```
+In Figure `r figure.Number <- figure.Number +1; figure.Number`, we can observe the different behaviour of weight based on the gender
+of the newborns. Since the statistic contained a lot of samples, we have only shown gestations in the interquartile range in the graph. 
+Later on, we will analyse the full dataset, through a boxplot.
 
-
-
-```{r descr_stats_04, results='asis', fig.align='center', echo=FALSE, fig.height=8, fig.width=5.5}
-#merge dataset newborns and distr_freq.Anni.madre_cl
-
+```{r descr_stats_04, results='asis', fig.align='center', echo=FALSE, fig.height=3.75, fig.width=4.5}
 Q1 <- quantile(newborns_dataset$Gestazione, .25)
 Q3 <- quantile(newborns_dataset$Gestazione, .75)
 
@@ -447,21 +435,21 @@ gestazione <- newborns_dataset %>%
 options(dplyr.summarise.inform = TRUE)
 peso_conditioned_sesso <- ggplot(data = gestazione,
                               aes(x = Gestazione, y = Peso, colour = Sesso, group = factor(Sesso))) +
-                        geom_line() +
-                        geom_point(size=2) +
-                        labs(x = "Weeks of pregnancy", y = "Skull circumference proportion", fill = "Skull circumference:") +
+                        geom_line(lwd = 2) +
+                        geom_point(size=3) +
+                        scale_color_manual("Gender:", values = c("M" = 'lightblue', "F" = 'lightpink')) +
+                        scale_x_continuous(breaks = seq(38,40,1)) +
+                        labs(x = "Weeks of pregnancy", y = "Weight") +
                         theme_minimal() +
                         theme(panel.grid.minor = element_blank(), legend.position = "bottom")
 
-caption_text <- sprintf("Figure %d: Birth type per class of ages, subordinates to smoker", figure.Number)
+caption_text <- sprintf("Figure %d: Weight of newborns per gender and weeks of pregnancy", figure.Number)
 caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
 grid.draw(arrangeGrob(peso_conditioned_sesso, bottom = caption_text))
 
 ```
-
-```{r descr_stats_05, results='asis', fig.align='center', echo=FALSE, fig.height=8, fig.width=5.5}
-#merge dataset newborns and distr_freq.Anni.madre_cl
-
+In Figure `r figure.Number <- figure.Number +1; figure.Number` instead, we can observe the different behaviour of length of newborns, considering a caesarean birth or natural birth, depending on the weeks of pregnancy. This statistic has been computed with the idea to check whether the caeserean birth, has been induced by the fetus dimensions, for example in case of fetal macrosomia. Clearly, this statistic no longer gives us the reason for the choice of type of birth, however, it is interesting to note that in most cases, the length of the fetus born by caesarean birth was greater than or equal to the length of the fetus born by natural childbirth.
+```{r descr_stats_05, results='asis', fig.align='center', echo=FALSE, fig.height=3.75, fig.width=4.5}
 options(dplyr.summarise.inform = FALSE)
 gestazione <- dataset_with_class_anni_madre %>%
     group_by(Tipo.parto, Gestazione) %>%
@@ -476,77 +464,62 @@ anni_madre_cl_distr <- ggplot(data = gestazione,
                               values = c("Nat" = "darkcyan",  
                                          "Ces" = "coral"))+
                         geom_point(size=2) +
-                        labs(x = "Weeks of pregnancy", y = "Skull circumference proportion", fill = "Skull circumference:") +
+                        labs(x = "Weeks of pregnancy", y = "Child length") +
                         theme_minimal() +
                         theme(panel.grid.minor = element_blank(), legend.position = "bottom")
 
-caption_text <- sprintf("Figure %d: Birth type per class of ages, subordinates to smoker", figure.Number)
+caption_text <- sprintf("Figure %d: Length of newborns, based on birth-type and gestation", figure.Number)
 caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
 grid.draw(arrangeGrob(anni_madre_cl_distr, bottom = caption_text))
 ```
+Finally in Figure `r figure.Number <- figure.Number +1; figure.Number`, we can observe the differences of weight, length, skull circumference and type of childbirth, between genders. It is interesting to note the total independence between the sex of the fetus and the type of birth. On the other hand, there is a difference between gender observations concerning physical characteristics. The most significant difference can be noticed in weight of newborns.
 
-```{r descr_stats_06, results='asis', fig.align='center', echo=FALSE, fig.height=8, fig.width=5.5}
-#merge dataset newborns and distr_freq.Anni.madre_cl
+##### TODO: calcolo medie e IQR tra sessi per le varie statistiche osservate.
+
+
+```{r descr_stats_06, results='asis', fig.align='center', echo=FALSE, fig.height=7, fig.width=6}
 
 options(dplyr.summarise.inform = FALSE)
-gestazione <- newborns_dataset %>%
-    filter(Gestazione >= quantile(Gestazione, 0.25) & Gestazione <= quantile(Gestazione, 0.75))  %>%
+dataframe_gender <- newborns_dataset %>%
     group_by(Sesso) %>%
     reframe(Peso, Lunghezza, Cranio, Tipo.parto)
     
 options(dplyr.summarise.inform = TRUE)
-peso_conditioned_sesso <- ggplot(data = gestazione,
-                              aes(x = Sesso, y = Peso)) +
-                        geom_col(position = "stack") +
-                        labs(x = "Weeks of pregnancy", y = "Skull circumference proportion", fill = "Skull circumference:") +
+peso_conditioned_sesso <- ggplot(data = dataframe_gender) +
+                        geom_boxplot(aes(x = Sesso, y = Peso, fill = Sesso)) +
+                        scale_fill_manual("Gender:", values = c("M" = 'lightblue', "F" = 'lightpink')) +
+                        labs(x = "Gender", y = "Weight") +
                         theme_minimal() +
                         theme(panel.grid.minor = element_blank(), legend.position = "bottom")
 
-caption_text <- sprintf("Figure %d: Birth type per class of ages, subordinates to smoker", figure.Number)
-caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
-grid.draw(arrangeGrob(peso_conditioned_sesso, bottom = caption_text))
-
-lunghezza_conditioned_sesso <- ggplot(data = gestazione,
-                              aes(x = Sesso, y = Lunghezza)) +
-                        geom_boxplot() +
-                        labs(x = "Weeks of pregnancy", y = "Skull circumference proportion", fill = "Skull circumference:") +
+lunghezza_conditioned_sesso <- ggplot(data = dataframe_gender) +
+                        geom_boxplot(aes(x = Sesso, y = Lunghezza, fill = Sesso)) +
+                        scale_fill_manual("Sex:", values = c("M" = 'lightblue', "F" = 'lightpink')) +
+                        labs(x = "Gender", y = "Length") +
                         theme_minimal() +
                         theme(panel.grid.minor = element_blank(), legend.position = "bottom")
 
-caption_text <- sprintf("Figure %d: Birth type per class of ages, subordinates to smoker", figure.Number)
-caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
-grid.draw(arrangeGrob(lunghezza_conditioned_sesso, bottom = caption_text))
-
-cranio_conditioned_sesso <- ggplot(data = gestazione,
-                              aes(x = Sesso, y = Cranio)) +
-                        geom_col(position = "stack") +
-                        labs(x = "Weeks of pregnancy", y = "Skull circumference proportion", fill = "Skull circumference:") +
+cranio_conditioned_sesso <- ggplot(data = dataframe_gender) +
+                        geom_boxplot(aes(x = Sesso, y = Cranio, fill = Sesso)) +
+                        scale_fill_manual("Sex:", values = c("M" = 'lightblue', "F" = 'lightpink')) +
+                        labs(x = "Gender", y = "Skull circumference") +
                         theme_minimal() +
                         theme(panel.grid.minor = element_blank(), legend.position = "bottom")
 
-caption_text <- sprintf("Figure %d: Birth type per class of ages, subordinates to smoker", figure.Number)
-caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
-grid.draw(arrangeGrob(cranio_conditioned_sesso, bottom = caption_text))
 
-tipo_parto_conditioned_sesso <- ggplot(data = gestazione,
-                              aes(x = Sesso, y = Tipo.parto)) +
-                        geom_col(position = "stack") +
-                        labs(x = "Weeks of pregnancy", y = "Skull circumference proportion", fill = "Skull circumference:") +
+tipo_parto_conditioned_sesso <- ggplot(data = dataframe_gender,
+                              aes(x = Tipo.parto, fill = Sesso)) +
+                        geom_bar(position = "fill") +
+                        scale_fill_manual("Sex:", values = c("M" = 'lightblue', "F" = 'lightpink')) +
+                        labs(x = "Childbird", y = "Gender") +
                         theme_minimal() +
                         theme(panel.grid.minor = element_blank(), legend.position = "bottom")
 
-caption_text <- sprintf("Figure %d: Birth type per class of ages, subordinates to smoker", figure.Number)
+caption_text <- sprintf("Figure %d: Gender comparisons for weight, length, skull circumference and type of childbirth", figure.Number)
 caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
 grid.draw(arrangeGrob(peso_conditioned_sesso, lunghezza_conditioned_sesso, 
         cranio_conditioned_sesso, tipo_parto_conditioned_sesso, bottom = caption_text, 
         ncol = 2, nrow = 2))
 
-
-
 ```
-
-
-
-Posso fare un'altra statistica considerando i gruppi di età, le settimane di gestazione ed la grandezza del cranio.
-In questo caso dovrebbe esserci una correlazione importante.
-
+## Hypothesis testing (Point 4)
