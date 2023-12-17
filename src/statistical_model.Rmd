@@ -37,6 +37,15 @@ ggplot_density.plot <- function(dataset, variable, x_label)
     )
 }
 
+compute.statistics <- function(observation)
+{
+  obj.summary <- round(summary(observation), digits = 2)
+  obj.std_dev <- list("std-dev"=round(sd(observation), digits = 2))
+  obj.IQR <- list("IQR"=round(IQR(observation), digits = 2))
+  obj.skewness <- list("skewness"=round(moments::skewness(observation), digits = 2))
+  return(c(obj.summary, obj.std_dev, obj.IQR, obj.skewness))
+  
+}
 
 figure.Number = 0
 
@@ -474,8 +483,55 @@ grid.draw(arrangeGrob(anni_madre_cl_distr, bottom = caption_text))
 ```
 Finally in Figure `r figure.Number <- figure.Number +1; figure.Number`, we can observe the differences of weight, length, skull circumference and type of childbirth, between genders. It is interesting to note the total independence between the sex of the fetus and the type of birth. On the other hand, there is a difference between gender observations concerning physical characteristics. The most significant difference can be noticed in weight of newborns.
 
-##### TODO: calcolo medie e IQR tra sessi per le varie statistiche osservate.
+```{r measures_comparison_between_genders, fig.align='center', echo=FALSE}
+dataframe_males <- newborns_dataset %>%
+  filter(Sesso == 'M') %>%
+  reframe(Sesso, Peso, Lunghezza, Cranio)
 
+dataframe_females <- newborns_dataset %>%
+  filter(Sesso == 'F') %>%
+  reframe(Sesso, Peso, Lunghezza, Cranio)
+
+M_stats.peso <- compute.statistics(dataframe_males$Peso)
+M_stats.lunghezza <- compute.statistics(dataframe_males$Lunghezza)
+M_stats.cranio <- compute.statistics(dataframe_males$Cranio)
+F_stats.peso <- compute.statistics(dataframe_females$Peso)
+F_stats.lunghezza <- compute.statistics(dataframe_females$Lunghezza)
+F_stats.cranio <- compute.statistics(dataframe_females$Cranio)
+```
+
+With the support of Figure `r figure.Number` and Tables 8 and 9, we can see that IQR ranges for variable "Peso", are equal, while the total range is much wider for females, meaning that outlayers are move further away from the average value. Moreover this means that also the standard deviation is higher for females with respect to males.
+```{r print_measures_comparison_between_genders_peso, fig.align='center', echo=FALSE}
+knitr::kable(t(M_stats.peso),
+    type="html", align='c', 
+    caption = "Statistics for Peso (males)")
+
+knitr::kable(t(F_stats.peso),
+    type="html", align='c', 
+    caption = "Statistics for Peso (females)")
+```
+
+Differently in Tables 10 and 11, we can see that IQR ranges, standard deviation, mean and median for variable "Lunghezza", are quite similar. However, the total range is still a bit wider in females.
+```{r print_measures_comparison_between_genders_lunghezza, fig.align='center', echo=FALSE}
+knitr::kable(t(M_stats.lunghezza),
+    type="html", align='c', 
+    caption = "Statistics for Lunghezza (males)")
+knitr::kable(t(F_stats.lunghezza),
+    type="html", align='c', 
+    caption = "Statistics for Lunghezza (females)")
+```
+
+Finally for variable "Cranio" (Tables 12 and 13, Figure `r figure.Number`c), shows results comparable to the variable "Lunghezza".
+```{r print_measures_comparison_between_genders_cranio, fig.align='center', echo=FALSE}
+knitr::kable(t(M_stats.cranio),
+    type="html", align='c', 
+    caption = "Statistics for Cranio (males)")
+knitr::kable(t(F_stats.cranio),
+    type="html", align='c', 
+    caption = "Statistics for Cranio (females)")
+
+
+```
 
 ```{r descr_stats_06, results='asis', fig.align='center', echo=FALSE, fig.height=7, fig.width=6}
 
@@ -522,4 +578,4 @@ grid.draw(arrangeGrob(peso_conditioned_sesso, lunghezza_conditioned_sesso,
         ncol = 2, nrow = 2))
 
 ```
-## Hypothesis testing (Point 4)
+## Hypothesis testing (Points 4 and 6)
