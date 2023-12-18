@@ -207,9 +207,9 @@ iqr <- IQR(newborns_dataset$Peso)
 
 It is interesting to note that "Peso" has in IQR value of 630 grams, while the range is 
 of 4100. This can been explained studying the graphic on Figure `r figure.Number <- figure.Number + 1; figure.Number`.
-The distribution is a Normal distribution, negatively skewed, with very long tails,
+The distribution is negatively skewed, with very long tails,
 specially on the left, making a large different between IQR (represented by red line 
-on the graphic) and range.
+on the graphic) and range. The distribution is not a Normal distribution, as we will see later observing the Q-Q Plot.
 
 ```{r peso_density, results='asis', fig.align='center', echo=FALSE, fig.width=5, fig.height=4}
 par(mgp = c(2, 1, 0))
@@ -579,3 +579,43 @@ grid.draw(arrangeGrob(peso_conditioned_sesso, lunghezza_conditioned_sesso,
 
 ```
 ## Hypothesis testing (Points 4 and 6)
+We now want to understand whether the sample of infants extracted correctly represents the population. In particular we want to test the hypothesis that the mean of weight and length of newborns is the same as the population.
+From *ospedalebambinogesu.it* we got that mean of weight and length of population of fetus is 3300 grams and 50 cm respectively.
+As we said on paragraph Peso, distribution of "Peso" and "Lunghezza" is not normal. In Figure `r figure.Number <- figure.Number +1; figure.Number`  we can see the Q-Q Plots for the two variables, which show a strong deviation from normality.
+```{r qqplot_peso_lunghezza, results='asis', fig.align='center', echo=FALSE, fig.height=5, fig.width=5}
+
+qq_plot_peso <- ggplot(newborns_dataset, aes(sample = Peso)) +
+  stat_qq(col="coral1", shape = 1, size = 2) +
+  stat_qq_line(col="coral1") +
+  ggtitle("Q-Q Plot for Peso") +
+  labs(x = "Theoretical Quantiles", y= "Sample Quantiles") +
+  theme_minimal() +
+  theme(axis.title=element_text(size=8), axis.text=element_text(size=8), plot.title = element_text(hjust = 0.5, size = 9))
+
+qq_plot_lunghezza <- ggplot(newborns_dataset, aes(sample = Lunghezza)) +
+  stat_qq(col="indianred", shape = 1, size = 2) +
+  stat_qq_line(col="indianred") +
+  ggtitle("Q-Q Plot for Lunghezza") +
+  labs(x = "Theoretical Quantiles", y= "Sample Quantiles") +
+  theme_minimal() +
+  theme(axis.title=element_text(size=8), axis.text=element_text(size=8), plot.title = element_text(hjust = 0.5, size = 9))
+
+caption_text <- sprintf("Figure %d: Q-Q Plot for Peso and Lunghezza", figure.Number)
+caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
+grid.draw(arrangeGrob(qq_plot_peso, qq_plot_lunghezza, bottom = caption_text, nrow = 2))
+
+```
+
+```{r qqplot_peso_lunghezza, results='asis', fig.align='center', echo=FALSE, fig.height=5, fig.width=5}
+
+mod_lin <- lm(Peso~Gestazione, data=newborns_dataset)
+
+shapiro.test(mod_lin$residuals)
+lmtest::bptest(mod_lin)
+lmtest::dwtest(mod_lin)
+
+```
+
+
+
+
