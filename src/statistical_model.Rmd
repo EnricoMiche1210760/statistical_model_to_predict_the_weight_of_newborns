@@ -608,6 +608,24 @@ grid.draw(arrangeGrob(qq_plot_peso, qq_plot_lunghezza, bottom = caption_text, nr
 
 ```{r qqplot_peso_lunghezza, results='asis', fig.align='center', echo=FALSE, fig.height=5, fig.width=5}
 
+#posso usare t-student :) per distribuzioni NON normali a differenza del test Z,
+# è più rilassato nel rifiutare un ipotesi.
+
+#TEST T con criterio SOGLIA
+t.test(newborns_dataset$Peso, 
+       mu = 3300,
+       conf.level = 0.95, 
+       alternative = "two")
+#non rifiuto l'ipotesi nulla, perché la mia media è all'interno dell'intervallo di confidenza.
+
+t.test(newborns_dataset$Lunghezza, 
+       mu = 500,
+       conf.level = 0.95, 
+       alternative = "two")
+
+#TEST T con criterio P-value
+
+
 mod_lin <- lm(Peso~Gestazione, data=newborns_dataset)
 
 shapiro.test(mod_lin$residuals)
