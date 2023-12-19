@@ -611,6 +611,14 @@ grid.draw(arrangeGrob(qq_plot_peso, qq_plot_lunghezza, bottom = caption_text, nr
 #posso usare t-student :) per distribuzioni NON normali a differenza del test Z,
 # è più rilassato nel rifiutare un ipotesi.
 
+Peso_distr_IQR <- newborns_dataset %>%
+  filter(Peso >= quantile(Peso, 0.25) & Peso <= quantile(Peso, 0.75))
+
+t.test(Peso_distr_IQR$Peso, 
+       mu = 3300,
+       conf.level = 0.95, 
+       alternative = "two")
+
 #TEST T con criterio SOGLIA
 t.test(newborns_dataset$Peso, 
        mu = 3300,
@@ -618,19 +626,25 @@ t.test(newborns_dataset$Peso,
        alternative = "two")
 #non rifiuto l'ipotesi nulla, perché la mia media è all'interno dell'intervallo di confidenza.
 
+Lunghezza_distr_IQR <- newborns_dataset %>%
+  filter(Lunghezza >= quantile(Lunghezza, 0.25) & Lunghezza <= quantile(Lunghezza, 0.75))
+
 t.test(newborns_dataset$Lunghezza, 
        mu = 500,
        conf.level = 0.95, 
        alternative = "two")
 
-#TEST T con criterio P-value
 
+
+#TEST T con criterio P-value
+ ?t.test
 
 mod_lin <- lm(Peso~Gestazione, data=newborns_dataset)
 
 shapiro.test(mod_lin$residuals)
 lmtest::bptest(mod_lin)
 lmtest::dwtest(mod_lin)
+
 
 ```
 
