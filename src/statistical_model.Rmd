@@ -581,8 +581,8 @@ grid.draw(arrangeGrob(peso_conditioned_sesso, lunghezza_conditioned_sesso,
 ## Hypothesis testing (Points 4 and 6)
 We now want to understand whether the sample of infants extracted correctly represents the population. In particular we want to test the hypothesis that the mean of weight and length of newborns is the same as the population.
 From *ospedalebambinogesu.it* we got that mean of weight and length of population of fetus is 3300 grams and 50 cm respectively.
-As we said on paragraph Peso, distribution of "Peso" and "Lunghezza" is not normal. In Figure `r figure.Number <- figure.Number +1; figure.Number`  we can see the Q-Q Plots for the two variables, which show a strong deviation from normality.
-```{r qqplot_peso_lunghezza, results='asis', fig.align='center', echo=FALSE, fig.height=5, fig.width=5}
+As we said on paragraph Peso, distribution of "Peso" and "Lunghezza" are not normal. In Figure `r figure.Number <- figure.Number +1; figure.Number`  we can see the Q-Q Plots for the two variables, which show a strong deviation from normality.
+```{r qqplot_peso_lunghezza, results='asis', fig.align='center', echo=FALSE, fig.height=3, fig.width=6}
 
 qq_plot_peso <- ggplot(newborns_dataset, aes(sample = Peso)) +
   stat_qq(col="coral1", shape = 1, size = 2) +
@@ -602,52 +602,113 @@ qq_plot_lunghezza <- ggplot(newborns_dataset, aes(sample = Lunghezza)) +
 
 caption_text <- sprintf("Figure %d: Q-Q Plot for Peso and Lunghezza", figure.Number)
 caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
-grid.draw(arrangeGrob(qq_plot_peso, qq_plot_lunghezza, bottom = caption_text, nrow = 2))
+grid.draw(arrangeGrob(qq_plot_peso, qq_plot_lunghezza, bottom = caption_text, ncol = 2))
 
 ```
-
-```{r qqplot_peso_lunghezza, results='asis', fig.align='center', echo=FALSE, fig.height=5, fig.width=5}
-
-#posso usare t-student :) per distribuzioni NON normali a differenza del test Z,
-# è più rilassato nel rifiutare un ipotesi.
-
-Peso_distr_IQR <- newborns_dataset %>%
-  filter(Peso >= quantile(Peso, 0.25) & Peso <= quantile(Peso, 0.75))
-
-t.test(Peso_distr_IQR$Peso, 
-       mu = 3300,
-       conf.level = 0.95, 
-       alternative = "two")
+We decided to compute Student T-test, exploiting the central limit theorem, and then the one sample Wilcoxon rank sum, to test the hypothesis reported before. With both test we have the same result, which is to not reject the null hypothesis for variable Peso, while to reject the null hypothesis for variable Lunghezza. 
+```{r test_hyp, results='asis', fig.align='center', echo=FALSE, fig.height=3, fig.width=7}
 
 #TEST T con criterio SOGLIA
-t.test(newborns_dataset$Peso, 
+peso_t_test_result <- t.test(newborns_dataset$Peso, 
        mu = 3300,
        conf.level = 0.95, 
        alternative = "two")
 #non rifiuto l'ipotesi nulla, perché la mia media è all'interno dell'intervallo di confidenza.
 
+peso_wilcox_test_result <- wilcox.test(newborns_dataset$Peso, mu = 3300, conf.level = 0.95, alternative = "two.sided")
+
+
 Lunghezza_distr_IQR <- newborns_dataset %>%
   filter(Lunghezza >= quantile(Lunghezza, 0.25) & Lunghezza <= quantile(Lunghezza, 0.75))
 
-t.test(newborns_dataset$Lunghezza, 
+lunghezza_t_test_result <- t.test(newborns_dataset$Lunghezza, 
        mu = 500,
        conf.level = 0.95, 
        alternative = "two")
+lunghezza_wilcox_result <- wilcox.test(newborns_dataset$Lunghezza, mu = 500, conf.level = 0.95, alternative = "two.sided")
+lunghezza_wilcox_result_IQR <- wilcox.test(Lunghezza_distr_IQR$Lunghezza, mu = 500, conf.level = 0.95, alternative = "two.sided")
 
+par(mgp = c(2, 1, 0), mfrow=c(1, 2))
 
+t_test_plot_1 <- plot(density(rt(10000000, 2499)), main = "", 
+            xlab = "Test-t for Peso")
+abline(v = qt(0.025, 2499), col = "red")
+abline(v = qt(0.975, 2499), col = "red")
+abline(v = peso_t_test_result$statistic, col = "black")
 
-#TEST T con criterio P-value
- ?t.test
+t_test_plot_2 <- plot(density(rt(10000000, 2499)), main = "", 
+            xlab = "Test-t for Lunghezza", xlim=c(-11,11))
+abline(v = qt(0.025, 2499), col = "red")
+abline(v = qt(0.975, 2499), col = "red")
+abline(v = lunghezza_t_test_result$statistic, col = "black")
+figure.Number <- figure.Number +1
+caption_text <- sprintf("Figure %d: Decision rule for Peso and Lunghezza", figure.Number)
+caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
+grid.draw(arrangeGrob(t_test_plot_1, t_test_plot_2, bottom = caption_text, ncol=2))
 
-mod_lin <- lm(Peso~Gestazione, data=newborns_dataset)
-
-shapiro.test(mod_lin$residuals)
-lmtest::bptest(mod_lin)
-lmtest::dwtest(mod_lin)
+#mod_lin <- lm(Peso~Gestazione, data=newborns_dataset)
+#shapiro.test(mod_lin$residuals)
+#lmtest::bptest(mod_lin)
+#lmtest::dwtest(mod_lin)
 
 
 ```
+On Figure `r figure.Number`, we can see the decision rule for Peso and Lunghezza. In case of Peso we are inside the acceptation zone
+while in case of Lunghezza we are inside the rejecting zone. Moreover for variable Peso we have a P-value that is `r peso_t_test_result$p.value` which is higher than 0.05, using a Student T-test, while it is `r peso_wilcox_test_result$p.value` using Wilcoxon. For variable Lunghezza instead, the corresponding P-value are `r lunghezza_t_test_result$p.value` and `r lunghezza_wilcox_result$p.value`.
+Even if mean value of lenght of our dataset differs from the global mean value by just 4 millimeters, the null hypothesis has been rejected. 
+This could be caused by the low standard deviation (and consequently variance), which cause the sample to be distorted but precise, and the
+proof is given by another Wilcoxon test for Lunghezza, considering only measures of Lunghezza inside the interquartile range, which provide the same result.
 
 
 
+```{r test_hyp_hospital, results='asis', fig.align='center', echo=FALSE, fig.height=3, fig.width=7}
+
+#TEST T con criterio SOGLIA
+
+df_osp_1 <- newborns_dataset %>%
+  filter(Ospedale == "osp1") %>%
+  count(Tipo.parto) %>%
+  summarise(Tipo.parto, n, Ospedale = "osp1")
+
+df_osp_2 <- newborns_dataset %>%
+  filter(Ospedale == "osp2") %>%
+  count(Tipo.parto) %>%
+  summarise(Tipo.parto, n, Ospedale = "osp2")
+
+df_osp_3 <- newborns_dataset %>%
+  filter(Ospedale == "osp3") %>%
+  count(Tipo.parto) %>%
+  summarise(Tipo.parto, n, Ospedale = "osp3")
+
+union_df <- rbind(df_osp_1, df_osp_2, df_osp_3)
+
+
+#boxplot(union_df$n~union_df$Tipo.parto+union_df$Ospedale) a noi non serve ...
+####
+##### DA QUI RIVEDERE TUTTO
+####
+
+pairwise.t.test(newborns_dataset$Tipo.parto~newborns_dataset$Ospedale)
+
+pairwise.wilcox.test(InsectSprays$count,InsectSprays$spray)
+
+par(mgp = c(2, 1, 0))
+
+t_test_plot_1 <- plot(density(rt(10000000, 2499)), main = "", 
+            xlab = "Test-t for Peso")
+abline(v = qt(0.025, 2499), col = "red")
+abline(v = qt(0.975, 2499), col = "red")
+abline(v = peso_t_test_result$statistic, col = "black")
+
+caption_text <- sprintf("Figure %d: Decision rule for Peso and Lunghezza", figure.Number)
+caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
+grid.draw(arrangeGrob(t_test_plot_1, t_test_plot_2, bottom = caption_text, ncol=2))
+
+#mod_lin <- lm(Peso~Gestazione, data=newborns_dataset)
+#shapiro.test(mod_lin$residuals)
+#lmtest::bptest(mod_lin)
+#lmtest::dwtest(mod_lin)
+
+
+```
 
