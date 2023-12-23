@@ -5,6 +5,9 @@ output:
     pdf_document:
         toc: true
         toc_depth: 3
+editor_options: 
+  markdown: 
+    wrap: 72
 ---
 
 ```{r setup, include=FALSE}
@@ -12,6 +15,8 @@ library(dplyr)
 library(ggplot2)
 library(grid)
 library(gridExtra)
+library(car)
+
 getwd()
 #setwd("/home/enrmic/statistical_model_to_predict_the_weight_of_newborns/src")
 
@@ -50,14 +55,21 @@ compute.statistics <- function(observation)
 figure.Number = 0
 
 ```
+
 ## Introduction (Point 2)
-This project concerns the creation of a statistical model to predict the weight of newborns. Our objective is to create a
-statistical model given the *neonati.csv* dataset that can be extended to the entire population. <br>
-In particular we want to find out whether it is possible to predict the infant's weight at birth given all the other variables.
-In particular, one wants to study a relationship with the mother's variables, to find out whether or not these have a
-not have a significant effect, such as the potentially harmful effect of smoking. The length and diameter of the infant's 
-skull are also used because they can be estimated already from ultrasound scans, but in general they could also serve as control 
-variables.
+
+This project concerns the creation of a statistical model to predict the
+weight of newborns. Our objective is to create a statistical model given
+the *neonati.csv* dataset that can be extended to the entire population.
+<br> In particular we want to find out whether it is possible to predict
+the infant's weight at birth given all the other variables. In
+particular, one wants to study a relationship with the mother's
+variables, to find out whether or not these have a not have a
+significant effect, such as the potentially harmful effect of smoking.
+The length and diameter of the infant's skull are also used because they
+can be estimated already from ultrasound scans, but in general they
+could also serve as control variables.
+
 ```{r dataframe_table, results='asis', echo=FALSE}
 newborns_dataset <- read.csv("data/neonati.csv")
 knitr::kable(head(newborns_dataset), type = "latex", align='c', booktabs = TRUE,
@@ -65,15 +77,19 @@ knitr::kable(head(newborns_dataset), type = "latex", align='c', booktabs = TRUE,
 ```
 
 ## Dataset (Points 1, 2, 3)
-The dataset is composed by 2500 samples and, studying its first rows, we can distinguish 10 variables: Anni.madre, N.gravidanze, Fumatrici, Gestazione, 
-Peso, Lunghezza, Cranio, Tipo.parto, Ospedale and Sesso. 
+
+The dataset is composed by 2500 samples and, studying its first rows, we
+can distinguish 10 variables: Anni.madre, N.gravidanze, Fumatrici,
+Gestazione, Peso, Lunghezza, Cranio, Tipo.parto, Ospedale and Sesso.
 
 ### Anni.madre
-Anni.madre is a quantitative variable on radio scale. In the dataset we have at least two outlayers, 
-which can be found at rows 1152 and 1380, and report an age of 1 and 0, respectively. 
-Computing position measures and standard deviation excluding those rows, we obtain:
-<div align="center">
 
+Anni.madre is a quantitative variable on radio scale. In the dataset we
+have at least two outlayers, which can be found at rows 1152 and 1380,
+and report an age of 1 and 0, respectively. Computing position measures
+and standard deviation excluding those rows, we obtain:
+
+::: {align="center"}
 ```{r anni_madre_summary, results='asis', echo=FALSE}
 min_val <- min(newborns_dataset$Anni.madre)
 line <- which(newborns_dataset$Anni.madre == min_val)
@@ -88,16 +104,17 @@ knitr::kable(t(c(round(summary(anni_madre_without_outlayers), 2), df_sigma)),
     type="html", align='c', 
     caption = "Position measures and standard deviation for Anni.madre")
 ```
-
-</div>
+:::
 
 ### N.gravidanze
-N.gravidanze is a quantitative variable on ratio scale, which represents the number of pregnancies per mother.
-In Table 3 position measures and standard deviation for the variable are shown.<br>
-We can see that mean and standard deviation and third interquartile are around 1 
-(0.98, 1.28 and 1 respectively), while the maximum reaches a value of 12.
-<div align="center">
 
+N.gravidanze is a quantitative variable on ratio scale, which represents
+the number of pregnancies per mother. In Table 3 position measures and
+standard deviation for the variable are shown.<br> We can see that mean
+and standard deviation and third interquartile are around 1 (0.98, 1.28
+and 1 respectively), while the maximum reaches a value of 12.
+
+::: {align="center"}
 ```{r n_gravidanze_summary, results='asis', echo=FALSE}
 
 sigma.n_gravidanze <- round(sd(newborns_dataset$N.gravidanze), 2)
@@ -109,11 +126,13 @@ knitr::kable(t(c(round(summary(newborns_dataset$N.gravidanze), 2), df_sigma)),
     caption = "Position measures and standard deviation for Anni.madre")
 
 ```
+:::
 
-</div>
+We can look now at the distribution of *N.gravidanze*. From Figure
+`r figure.Number <- figure.Number + 1; figure.Number` we can notice that
+it is a normal positive skewed distribution, with mean 0.98 and standard
+deviation of 1.28.
 
-We can look now at the distribution of *N.gravidanze*. From Figure `r figure.Number <- figure.Number + 1; figure.Number` 
-we can notice that it is a normal positive skewed distribution, with mean 0.98 and standard deviation of 1.28.
 ```{r n_gravidanze_density, results='asis', echo=FALSE, fig.align='center', fig.height=3.5, fig.width=6}
 
 density_plot <- ggplot(data = newborns_dataset, 
@@ -132,18 +151,21 @@ grid.draw(arrangeGrob(density_plot, bottom = caption_text))
 ```
 
 ### Fumatrici
-Fumatrici is a qualitative encoded variable on nominal scale, with values 0 and 1. 
-Value 0 means that the mother is not a smoker, while mothers with "Fumatrici" value of
-1 means she is a smoker. <br>
+
+Fumatrici is a qualitative encoded variable on nominal scale, with
+values 0 and 1. Value 0 means that the mother is not a smoker, while
+mothers with "Fumatrici" value of 1 means she is a smoker. <br>
 
 ```{r fumatrici_summary, echo=FALSE}
 fumatrici_gini_coeff <- round(gini.index(newborns_dataset$Fumatrici), 2)
 not_smoker_percentage <- table(newborns_dataset$Fumatrici)
 ```
 
-Computing the Gini coefficient for the variable, we obtain a value of `r fumatrici_gini_coeff`,
-which means that the ditribution is not much equally distributed. 
-In Figure `r figure.Number <- figure.Number + 1; figure.Number`, the distribution of variable "Fumatrici" is shown.
+Computing the Gini coefficient for the variable, we obtain a value of
+`r fumatrici_gini_coeff`, which means that the ditribution is not much
+equally distributed. In Figure
+`r figure.Number <- figure.Number + 1; figure.Number`, the distribution
+of variable "Fumatrici" is shown.
 
 ```{r fumatrici_graphic, results='asis', echo=FALSE, fig.align='center', fig.height=3, fig.width=5}
 smoker_plot <- ggplot(data = newborns_dataset) +
@@ -165,13 +187,13 @@ grid.draw(arrangeGrob(smoker_plot, bottom = caption_text))
 ```
 
 ### Gestazione
-Gestazione is a quantitative variable on ratio scale, measured in weeks, 
-with position and standard deviation measures that can be seen in Table 5. <br>
-As we expect, the mean value is around 40 weeks (38.98), with a low standard deviation 
-of 1.87 weeks.
 
-<div align="center">
+Gestazione is a quantitative variable on ratio scale, measured in weeks,
+with position and standard deviation measures that can be seen in Table
+5. <br> As we expect, the mean value is around 40 weeks (38.98), with a
+low standard deviation of 1.87 weeks.
 
+::: {align="center"}
 ```{r gestazione_summary, results='asis', echo=FALSE}
 
 sigma.gestazione <- round(sd(newborns_dataset$Gestazione), 2)
@@ -182,15 +204,15 @@ knitr::kable(t(c(round(summary(newborns_dataset$Gestazione), 2), df_sigma)),
     type="html", align='c', 
     caption = "Position measures and standard deviation for Gestazione")
 ```
-</div>
-
+:::
 
 ### Peso
-Peso is a quantitative variable on ratio scale, and represents the weight of 
-newborns in grams. Position measures and standard deviation are observable in Table 6. 
 
-<div align="center">
+Peso is a quantitative variable on ratio scale, and represents the
+weight of newborns in grams. Position measures and standard deviation
+are observable in Table 6.
 
+::: {align="center"}
 ```{r peso_summary, results='asis', echo=FALSE}
 
 sigma.Peso <- round(sd(newborns_dataset$Peso), 2)
@@ -203,13 +225,15 @@ knitr::kable(t(c(round(summary(newborns_dataset$Peso), 2), df_sigma)),
 iqr <- IQR(newborns_dataset$Peso)
 
 ```
-</div>
+:::
 
-It is interesting to note that "Peso" has in IQR value of 630 grams, while the range is 
-of 4100. This can been explained studying the graphic on Figure `r figure.Number <- figure.Number + 1; figure.Number`.
-The distribution is negatively skewed, with very long tails,
-specially on the left, making a large different between IQR (represented by red line 
-on the graphic) and range. The distribution is not a Normal distribution, as we will see later observing the Q-Q Plot.
+It is interesting to note that "Peso" has in IQR value of 630 grams,
+while the range is of 4100. This can been explained studying the graphic
+on Figure `r figure.Number <- figure.Number + 1; figure.Number`. The
+distribution is negatively skewed, with very long tails, specially on
+the left, making a large different between IQR (represented by red line
+on the graphic) and range. The distribution is not a Normal
+distribution, as we will see later observing the Q-Q Plot.
 
 ```{r peso_density, results='asis', fig.align='center', echo=FALSE, fig.width=5, fig.height=4}
 par(mgp = c(2, 1, 0))
@@ -230,11 +254,12 @@ skew <- moments::skewness(newborns_dataset$Peso)
 ```
 
 ### Lunghezza
-Lunghezza is a quantitative variable on ratio scale. Represents the length of the newborn in millimeters.
-For this variable we expect a behaviour quite similar to variable "Peso". 
 
-<div align="center">
+Lunghezza is a quantitative variable on ratio scale. Represents the
+length of the newborn in millimeters. For this variable we expect a
+behaviour quite similar to variable "Peso".
 
+::: {align="center"}
 ```{r Lunghezza_summary, results='asis', echo=FALSE}
 
 sigma.Lunghezza <- round(sd(newborns_dataset$Lunghezza), 2)
@@ -245,7 +270,7 @@ knitr::kable(t(c(round(summary(newborns_dataset$Lunghezza), 2), df_sigma)),
     type="html", align='c', 
     caption = "Position measures and standard deviation for Lunghezza")
 ```
-</div>
+:::
 
 ```{r Lunghezza_density, results='asis', echo=FALSE, fig.align='center', fig.height=3}
 
@@ -263,12 +288,12 @@ skew <- moments::skewness(newborns_dataset$Lunghezza)
 ```
 
 ### Cranio
-Cranio is a quantitative variable on ratio scale. Represents the cranium diameter 
-of the newborn in millimeters. <br>
-In Table 8, we can observe position measures and standard deviation for variable "Cranio". 
 
-<div align="center">
+Cranio is a quantitative variable on ratio scale. Represents the cranium
+diameter of the newborn in millimeters. <br> In Table 8, we can observe
+position measures and standard deviation for variable "Cranio".
 
+::: {align="center"}
 ```{r cranio_summary, results='asis', echo=FALSE}
 
 sigma.Cranio <- round(sd(newborns_dataset$Cranio), 2)
@@ -279,30 +304,40 @@ knitr::kable(t(c(round(summary(newborns_dataset$Cranio), 2), df_sigma)),
     type="html", align='c', 
     caption = "Position measures and standard deviation for Cranio")
 ```
-
-</div>
+:::
 
 ### Tipo.parto
-Tipo.parto is a qualitative variable on nominal scale. Represents the type of childbirth, and is encoded with 
-"Nat" (natural) and "Ces" (caesarean). For a qualitative variable we can compute Gini coefficient, which provides
-a measure of heterogeneity. Gini coefficient for "Tipo.parto" is 0.83, indicating a very high heterogeneity.
+
+Tipo.parto is a qualitative variable on nominal scale. Represents the
+type of childbirth, and is encoded with "Nat" (natural) and "Ces"
+(caesarean). For a qualitative variable we can compute Gini coefficient,
+which provides a measure of heterogeneity. Gini coefficient for
+"Tipo.parto" is 0.83, indicating a very high heterogeneity.
 
 ```{r tipo_parto_gini, include=FALSE}
 gini_index.Parto <- gini.index(newborns_dataset$Tipo.parto)
 ```
 
 ### Ospedale
-Ospedale is a qualitative variable on nominal scale. It represents three different hospitals, and is coded in "osp 1", 
-"osp 2" and "osp 3". The Gini coefficient is very close to 1 which means that the variable is almost heterogeneous.
+
+Ospedale is a qualitative variable on nominal scale. It represents three
+different hospitals, and is coded in "osp 1", "osp 2" and "osp 3". The
+Gini coefficient is very close to 1 which means that the variable is
+almost heterogeneous.
 
 ```{r ospedale_gini, include=FALSE}
 gini_index.Ospedale <- gini.index(newborns_dataset$Ospedale)
 ```
 
 ### Sesso
-Sesso is a qualitative variable on nominal scale. Represents the gender of the newborn, and is coded with "M" for males 
-and "F" for females. The Gini coefficient is very close to 1 which means that the variable is almost heterogeneous.
-In Figure `r figure.Number <- figure.Number + 1; figure.Number` we can see the distribution of "Sesso".
+
+Sesso is a qualitative variable on nominal scale. Represents the gender
+of the newborn, and is coded with "M" for males and "F" for females. The
+Gini coefficient is very close to 1 which means that the variable is
+almost heterogeneous. In Figure
+`r figure.Number <- figure.Number + 1; figure.Number` we can see the
+distribution of "Sesso".
+
 ```{r sesso_gini, include=FALSE}
 gini_index.Sesso <- gini.index(newborns_dataset$Sesso)
 ```
@@ -326,8 +361,11 @@ grid.draw(arrangeGrob(sesso_plot, bottom = caption_text))
 ```
 
 ## Descriptive statistics (Points 3, 5)
-We want to introduce now a short descriptive analysis of the dataset. For our porpuses, we divide
-frequency distribution of Anni.madre into classes, and we show the distribution in Figure `r figure.Number <- figure.Number + 1; figure.Number`.
+
+We want to introduce now a short descriptive analysis of the dataset.
+For our porpuses, we divide frequency distribution of Anni.madre into
+classes, and we show the distribution in Figure
+`r figure.Number <- figure.Number + 1; figure.Number`.
 
 ```{r anni_madre_cl_distr, results='asis', fig.align='center', echo=FALSE, fig.height=4.5, fig.width=4}
 Anni.madre_cl <- cut(newborns_dataset$Anni.madre, 
@@ -359,7 +397,10 @@ caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
 grid.draw(arrangeGrob(anni_madre_cl_distr, bottom = caption_text))
 ```
 
-Once obtained the distribution in classes of Anni.madre, we are interested in observing the trend of number of pregnancies per class of ages.
+Once obtained the distribution in classes of Anni.madre, we are
+interested in observing the trend of number of pregnancies per class of
+ages.
+
 ```{r descr_stats_01, results='asis', fig.align='center', echo=FALSE, fig.height=3, fig.width=4.5}
 dataset_with_class_anni_madre <- cbind(newborns_dataset, Anni.madre_cl)
 
@@ -376,16 +417,28 @@ caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
 grid.draw(arrangeGrob(anni_madre_cl_distr, bottom = caption_text))
 
 ```
-As we can see in Figure `r figure.Number` as we could expect, the number of pregnancies has an increasing trend.
-Moreover, in the classes of ages between 31 and 35, there is still more than 25% of mothers, which are waiting
-the first baby. Another interesting result is obtained observing the class of age 0-15, where a consistent percentage
-of mothers are waiting for the second baby. However, the latter statistic is somewhat misleading, as the sample of mothers 
-between the ages of 0 and 15 is obviously very small. <br>
-Computation of this statistic in general does not give us particular information. Therefore, we can proceed by observing
-the type of childbirth, subordinate to the age and the fact that mother smokes or not. <br>
-From Figure `r figure.Number <- figure.Number +1; figure.Number`, we can note that until the range 26-30, there seems to be
-no impact for smoker mothers with respect to non smoker mothers. On the other hand, as age passing, we note that the number
-of caesarean births decreases if the mother is a smoker, which is really strange. However we wanted to show you this statistic, to remember that great care must be taken when analysing data. In fact, this statistic is highly altered by the fact that the number of smoking mothers, as shown in Figure 2, is only a small percentage compared to the number of non-smoking mothers.
+
+As we can see in Figure `r figure.Number` as we could expect, the number
+of pregnancies has an increasing trend. Moreover, in the classes of ages
+between 31 and 35, there is still more than 25% of mothers, which are
+waiting the first baby. Another interesting result is obtained observing
+the class of age 0-15, where a consistent percentage of mothers are
+waiting for the second baby. However, the latter statistic is somewhat
+misleading, as the sample of mothers between the ages of 0 and 15 is
+obviously very small. <br> Computation of this statistic in general does
+not give us particular information. Therefore, we can proceed by
+observing the type of childbirth, subordinate to the age and the fact
+that mother smokes or not. <br> From Figure
+`r figure.Number <- figure.Number +1; figure.Number`, we can note that
+until the range 26-30, there seems to be no impact for smoker mothers
+with respect to non smoker mothers. On the other hand, as age passing,
+we note that the number of caesarean births decreases if the mother is a
+smoker, which is really strange. However we wanted to show you this
+statistic, to remember that great care must be taken when analysing
+data. In fact, this statistic is highly altered by the fact that the
+number of smoking mothers, as shown in Figure 2, is only a small
+percentage compared to the number of non-smoking mothers.
+
 ```{r descr_stats_02, results='asis', fig.align='center', echo=FALSE, fig.height=6.5, fig.width=5}
 
 type_of_childbird <- dataset_with_class_anni_madre %>%
@@ -408,8 +461,15 @@ caption_text <- sprintf("Figure %d: Birth type per class of ages, subordinates t
 caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
 grid.draw(arrangeGrob(anni_madre_cl_distr, bottom = caption_text))
 ```
-We want now to analyse the skull circumference with respect to pregnancy and class of ages of mothers.  From Figure `r figure.Number <- figure.Number +1; figure.Number`, we can observe that the class of ages does not significantly affect the skull circumference, 
-whereas, as expected, weeks of gestation significantly affect skull size. Later on, we will analyse how and whether gender affects the size of the fetus' skull.
+
+We want now to analyse the skull circumference with respect to pregnancy
+and class of ages of mothers. From Figure
+`r figure.Number <- figure.Number +1; figure.Number`, we can observe
+that the class of ages does not significantly affect the skull
+circumference, whereas, as expected, weeks of gestation significantly
+affect skull size. Later on, we will analyse how and whether gender
+affects the size of the fetus' skull.
+
 ```{r descr_stats_03, results='asis', fig.align='center', echo=FALSE, fig.height=7.5, fig.width=5.5}
 gestazione <- dataset_with_class_anni_madre %>%
     group_by(Anni.madre_cl, Gestazione) %>%
@@ -427,9 +487,12 @@ caption_text <- sprintf("Figure %d: Skull circumference, subordinates to weeks o
 caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
 grid.draw(arrangeGrob(anni_madre_cl_distr, bottom = caption_text))
 ```
-In Figure `r figure.Number <- figure.Number +1; figure.Number`, we can observe the different behaviour of weight based on the gender
-of the newborns. Since the statistic contained a lot of samples, we have only shown gestations in the interquartile range in the graph. 
-Later on, we will analyse the full dataset, through a boxplot.
+
+In Figure `r figure.Number <- figure.Number +1; figure.Number`, we can
+observe the different behaviour of weight based on the gender of the
+newborns. Since the statistic contained a lot of samples, we have only
+shown gestations in the interquartile range in the graph. Later on, we
+will analyse the full dataset, through a boxplot.
 
 ```{r descr_stats_04, results='asis', fig.align='center', echo=FALSE, fig.height=3.75, fig.width=4.5}
 Q1 <- quantile(newborns_dataset$Gestazione, .25)
@@ -457,7 +520,18 @@ caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
 grid.draw(arrangeGrob(peso_conditioned_sesso, bottom = caption_text))
 
 ```
-In Figure `r figure.Number <- figure.Number +1; figure.Number` instead, we can observe the different behaviour of length of newborns, considering a caesarean birth or natural birth, depending on the weeks of pregnancy. This statistic has been computed with the idea to check whether the caeserean birth, has been induced by the fetus dimensions, for example in case of fetal macrosomia. Clearly, this statistic no longer gives us the reason for the choice of type of birth, however, it is interesting to note that in most cases, the length of the fetus born by caesarean birth was greater than or equal to the length of the fetus born by natural childbirth.
+
+In Figure `r figure.Number <- figure.Number +1; figure.Number` instead,
+we can observe the different behaviour of length of newborns,
+considering a caesarean birth or natural birth, depending on the weeks
+of pregnancy. This statistic has been computed with the idea to check
+whether the caeserean birth, has been induced by the fetus dimensions,
+for example in case of fetal macrosomia. Clearly, this statistic no
+longer gives us the reason for the choice of type of birth, however, it
+is interesting to note that in most cases, the length of the fetus born
+by caesarean birth was greater than or equal to the length of the fetus
+born by natural childbirth.
+
 ```{r descr_stats_05, results='asis', fig.align='center', echo=FALSE, fig.height=3.75, fig.width=4.5}
 options(dplyr.summarise.inform = FALSE)
 gestazione <- dataset_with_class_anni_madre %>%
@@ -481,7 +555,14 @@ caption_text <- sprintf("Figure %d: Length of newborns, based on birth-type and 
 caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
 grid.draw(arrangeGrob(anni_madre_cl_distr, bottom = caption_text))
 ```
-Finally in Figure `r figure.Number <- figure.Number +1; figure.Number`, we can observe the differences of weight, length, skull circumference and type of childbirth, between genders. It is interesting to note the total independence between the sex of the fetus and the type of birth. On the other hand, there is a difference between gender observations concerning physical characteristics. The most significant difference can be noticed in weight of newborns.
+
+Finally in Figure `r figure.Number <- figure.Number +1; figure.Number`,
+we can observe the differences of weight, length, skull circumference
+and type of childbirth, between genders. It is interesting to note the
+total independence between the sex of the fetus and the type of birth.
+On the other hand, there is a difference between gender observations
+concerning physical characteristics. The most significant difference can
+be noticed in weight of newborns.
 
 ```{r measures_comparison_between_genders, fig.align='center', echo=FALSE}
 dataframe_males <- newborns_dataset %>%
@@ -500,7 +581,12 @@ F_stats.lunghezza <- compute.statistics(dataframe_females$Lunghezza)
 F_stats.cranio <- compute.statistics(dataframe_females$Cranio)
 ```
 
-With the support of Figure `r figure.Number` and Tables 8 and 9, we can see that IQR ranges for variable "Peso", are equal, while the total range is much wider for females, meaning that outlayers are move further away from the average value. Moreover this means that also the standard deviation is higher for females with respect to males.
+With the support of Figure `r figure.Number` and Tables 8 and 9, we can
+see that IQR ranges for variable "Peso", are equal, while the total
+range is much wider for females, meaning that outlayers are move further
+away from the average value. Moreover this means that also the standard
+deviation is higher for females with respect to males.
+
 ```{r print_measures_comparison_between_genders_peso, fig.align='center', echo=FALSE}
 knitr::kable(t(M_stats.peso),
     type="html", align='c', 
@@ -511,7 +597,10 @@ knitr::kable(t(F_stats.peso),
     caption = "Statistics for Peso (females)")
 ```
 
-Differently in Tables 10 and 11, we can see that IQR ranges, standard deviation, mean and median for variable "Lunghezza", are quite similar. However, the total range is still a bit wider in females.
+Differently in Tables 10 and 11, we can see that IQR ranges, standard
+deviation, mean and median for variable "Lunghezza", are quite similar.
+However, the total range is still a bit wider in females.
+
 ```{r print_measures_comparison_between_genders_lunghezza, fig.align='center', echo=FALSE}
 knitr::kable(t(M_stats.lunghezza),
     type="html", align='c', 
@@ -521,7 +610,10 @@ knitr::kable(t(F_stats.lunghezza),
     caption = "Statistics for Lunghezza (females)")
 ```
 
-Finally for variable "Cranio" (Tables 12 and 13, Figure `r figure.Number`c), shows results comparable to the variable "Lunghezza".
+Finally for variable "Cranio" (Tables 12 and 13, Figure
+`r figure.Number`c), shows results comparable to the variable
+"Lunghezza".
+
 ```{r print_measures_comparison_between_genders_cranio, fig.align='center', echo=FALSE}
 knitr::kable(t(M_stats.cranio),
     type="html", align='c', 
@@ -578,10 +670,20 @@ grid.draw(arrangeGrob(peso_conditioned_sesso, lunghezza_conditioned_sesso,
         ncol = 2, nrow = 2))
 
 ```
+
 ## Hypothesis testing (Points 4 and 6)
-We now want to understand whether the sample of infants extracted correctly represents the population. In particular we want to test the hypothesis that the mean of weight and length of newborns is the same as the population.
-From *ospedalebambinogesu.it* we got that mean of weight and length of population of fetus is 3300 grams and 50 cm respectively.
-As we said on paragraph Peso, distribution of "Peso" and "Lunghezza" are not normal. In Figure `r figure.Number <- figure.Number +1; figure.Number`  we can see the Q-Q Plots for the two variables, which show a strong deviation from normality.
+
+We now want to understand whether the sample of infants extracted
+correctly represents the population. In particular we want to test the
+hypothesis that the mean of weight and length of newborns is the same as
+the population. From *ospedalebambinogesu.it* we got that mean of weight
+and length of population of fetus is 3300 grams and 50 cm respectively.
+As we said on paragraph Peso, distribution of "Peso" and "Lunghezza" are
+not normal. In Figure
+`r figure.Number <- figure.Number +1; figure.Number` we can see the Q-Q
+Plots for the two variables, which show a strong deviation from
+normality.
+
 ```{r qqplot_peso_lunghezza, results='asis', fig.align='center', echo=FALSE, fig.height=3, fig.width=6}
 
 qq_plot_peso <- ggplot(newborns_dataset, aes(sample = Peso)) +
@@ -605,7 +707,13 @@ caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
 grid.draw(arrangeGrob(qq_plot_peso, qq_plot_lunghezza, bottom = caption_text, ncol = 2))
 
 ```
-We decided to compute Student T-test, exploiting the central limit theorem, and then the one sample Wilcoxon rank sum, to test the hypothesis reported before. With both test we have the same result, which is to not reject the null hypothesis for variable Peso, while to reject the null hypothesis for variable Lunghezza. 
+
+We decided to compute Student T-test, exploiting the central limit
+theorem, and then the one sample Wilcoxon rank sum, to test the
+hypothesis reported before. With both test we have the same result,
+which is to not reject the null hypothesis for variable Peso, while to
+reject the null hypothesis for variable Lunghezza.
+
 ```{r test_hyp, results='asis', fig.align='center', echo=FALSE, fig.height=3, fig.width=7}
 
 #TEST T con criterio SOGLIA
@@ -646,69 +754,89 @@ caption_text <- sprintf("Figure %d: Decision rule for Peso and Lunghezza", figur
 caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
 grid.draw(arrangeGrob(t_test_plot_1, t_test_plot_2, bottom = caption_text, ncol=2))
 
-#mod_lin <- lm(Peso~Gestazione, data=newborns_dataset)
-#shapiro.test(mod_lin$residuals)
-#lmtest::bptest(mod_lin)
-#lmtest::dwtest(mod_lin)
-
-
 ```
-On Figure `r figure.Number`, we can see the decision rule for Peso and Lunghezza. In case of Peso we are inside the acceptation zone
-while in case of Lunghezza we are inside the rejecting zone. Moreover for variable Peso we have a P-value that is `r peso_t_test_result$p.value` which is higher than 0.05, using a Student T-test, while it is `r peso_wilcox_test_result$p.value` using Wilcoxon. For variable Lunghezza instead, the corresponding P-value are `r lunghezza_t_test_result$p.value` and `r lunghezza_wilcox_result$p.value`.
-Even if mean value of lenght of our dataset differs from the global mean value by just 4 millimeters, the null hypothesis has been rejected. 
-This could be caused by the low standard deviation (and consequently variance), which cause the sample to be distorted but precise, and the
-proof is given by another Wilcoxon test for Lunghezza, considering only measures of Lunghezza inside the interquartile range, which provide the same result.
 
+On Figure `r figure.Number`, we can see the decision rule for Peso and
+Lunghezza. In case of Peso we are inside the acceptation zone while in
+case of Lunghezza we are inside the rejecting zone. Moreover for
+variable Peso we have a P-value that is `r peso_t_test_result$p.value`
+which is higher than 0.05, using a Student T-test, while it is
+`r peso_wilcox_test_result$p.value` using Wilcoxon. For variable
+Lunghezza instead, the corresponding P-value are
+`r lunghezza_t_test_result$p.value` and
+`r lunghezza_wilcox_result$p.value`. Even if mean value of lenght of our
+dataset differs from the global mean value by just 4 millimeters, the
+null hypothesis has been rejected. This could be caused by the low
+standard deviation (and consequently variance), which cause the sample
+to be distorted but precise, and the proof is given by another Wilcoxon
+test for Lunghezza, considering only measures of Lunghezza inside the
+interquartile range, which provide the same result. <br>
 
-
-```{r test_hyp_hospital, results='asis', fig.align='center', echo=FALSE, fig.height=3, fig.width=7}
-
-#TEST T con criterio SOGLIA
+``` {r test_hyp_hospital, results='asis', fig.align='center', echo=FALSE, include=FALSE}
+chi_square_test_result <- chisq.test(newborns_dataset$Tipo.parto, newborns_dataset$Ospedale)
 
 df_osp_1 <- newborns_dataset %>%
   filter(Ospedale == "osp1") %>%
   count(Tipo.parto) %>%
-  summarise(Tipo.parto, n, Ospedale = "osp1")
+  reframe(Tipo.parto, freq = round(n/sum(n), 2), Ospedale = "osp1")
 
 df_osp_2 <- newborns_dataset %>%
   filter(Ospedale == "osp2") %>%
   count(Tipo.parto) %>%
-  summarise(Tipo.parto, n, Ospedale = "osp2")
+  reframe(Tipo.parto, freq = round(n/sum(n), 2), Ospedale = "osp2")
 
 df_osp_3 <- newborns_dataset %>%
   filter(Ospedale == "osp3") %>%
   count(Tipo.parto) %>%
-  summarise(Tipo.parto, n, Ospedale = "osp3")
+  reframe(Tipo.parto, freq = round(n/sum(n), 2), Ospedale = "osp3")
 
 union_df <- rbind(df_osp_1, df_osp_2, df_osp_3)
 
+#test if in some hospitals there are more cesarean than in the others
+wilcox_test_result <- pairwise.wilcox.test(union_df$freq, union_df$Ospedale, paired = FALSE, p.adjust.method = "bonferroni")
+```
 
-#boxplot(union_df$n~union_df$Tipo.parto+union_df$Ospedale) a noi non serve ...
-####
-##### DA QUI RIVEDERE TUTTO
-####
+Another point we want to test is **if the percentage of caesarean section is the 
+same for all the hospitals, or there is some hospitals in which this percentage 
+is higher**.
+To do this, we use a chi-square test, which is a test for indipendence between 
+two categorical variables. The null hypothesis is that the two variables are 
+indipendent, while the alternative hypothesis is that they are not. The result 
+of this test is that we can not reject the null hypotesis, obtaining a p-value 
+of `r round(chi_square_test_result$p.value, 2)`. The other test we made was a pairwise 
+Wilcoxon test, which is a non-parametric test for multiple comparisons. 
+The null hypothesis is that the three hospitals have the same percentage of
+caesarean section, while the alternative hypothesis is that they are not. The 
+result of this test is that we can not reject the null hypotesis, obtaining a 
+p-value of 1 comparing hospitals. This means that the percentage of caesarean
+section is the same for all the hospitals, and there is no hospital in which
+this percentage is higher than the others.
 
-pairwise.t.test(newborns_dataset$Tipo.parto~newborns_dataset$Ospedale)
-
-pairwise.wilcox.test(InsectSprays$count,InsectSprays$spray)
-
-par(mgp = c(2, 1, 0))
-
-t_test_plot_1 <- plot(density(rt(10000000, 2499)), main = "", 
-            xlab = "Test-t for Peso")
-abline(v = qt(0.025, 2499), col = "red")
-abline(v = qt(0.975, 2499), col = "red")
-abline(v = peso_t_test_result$statistic, col = "black")
-
-caption_text <- sprintf("Figure %d: Decision rule for Peso and Lunghezza", figure.Number)
-caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
-grid.draw(arrangeGrob(t_test_plot_1, t_test_plot_2, bottom = caption_text, ncol=2))
-
-#mod_lin <- lm(Peso~Gestazione, data=newborns_dataset)
-#shapiro.test(mod_lin$residuals)
-#lmtest::bptest(mod_lin)
-#lmtest::dwtest(mod_lin)
-
+## Part 2: Generalized Linear Models
+In this part we will use the dataset `newborns_dataset` to want to build a model
+to predict the weight of a newborn, using the other variables of the dataset.
+The first thing we want to do is to investigate the relationship between the
+weight of a newborn and the other variables. To do this, we use a scatterplot.
+```{r scatterplot, results='asis', fig.align='center', echo=FALSE, fig.height=7, fig.width=7}
+scatterplot(Peso ~ Gestazione, data = newborns_dataset, smooth = FALSE, main = "Scatterplot of weight and the other variables")
 
 ```
 
+```{r scatterplot_2, results='asis', fig.align='center', echo=FALSE, fig.height=3, fig.width=7}
+scatterplot(Peso ~ ., data = newborns_dataset, smooth = FALSE, span = 0.5, main = "Scatterplot of weight and the other variables", reg.line = list(method = "lm", col = "red"))
+
+```
+
+```{r scatterplot_3, results='asis', fig.align='center', echo=FALSE, fig.height=3, fig.width=7}
+scatterplot(Peso ~ ., data = newborns_dataset, smooth = FALSE, span = 0.5, main = "Scatterplot of weight and the other variables", reg.line = list(method = "lm", col = "red"), boxplots = "xy")
+
+```
+
+```{r investigation, results='asis', fig.align='center', echo=FALSE, fig.height=3, fig.width=7}
+#parte
+```
+
+```{r parte_2, results='asis', fig.align='center', echo=FALSE, fig.height=3, fig.width=7}
+
+
+```
