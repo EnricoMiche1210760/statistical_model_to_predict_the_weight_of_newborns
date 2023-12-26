@@ -18,7 +18,7 @@ library(gridExtra)
 library(car)
 
 getwd()
-#setwd("/home/enrmic/statistical_model_to_predict_the_weight_of_newborns/src")
+#setwd("/home/enrico/statistica/statistical_model_to_predict_the_weight_of_newborns/src")
 
 gini.index <- function(x)
 {
@@ -61,7 +61,7 @@ figure.Number = 0
 This project concerns the creation of a statistical model to predict the
 weight of newborns. Our objective is to create a statistical model given
 the *neonati.csv* dataset that can be extended to the entire population.
-<br> In particular we want to find out whether it is possible to predict
+ In particular we want to find out whether it is possible to predict
 the infant's weight at birth given all the other variables. In
 particular, one wants to study a relationship with the mother's
 variables, to find out whether or not these have a not have a
@@ -110,7 +110,7 @@ knitr::kable(t(c(round(summary(anni_madre_without_outlayers), 2), df_sigma)),
 
 N.gravidanze is a quantitative variable on ratio scale, which represents
 the number of pregnancies per mother. In Table 3 position measures and
-standard deviation for the variable are shown.<br> We can see that mean
+standard deviation for the variable are shown. We can see that mean
 and standard deviation and third interquartile are around 1 (0.98, 1.28
 and 1 respectively), while the maximum reaches a value of 12.
 
@@ -154,7 +154,7 @@ grid.draw(arrangeGrob(density_plot, bottom = caption_text))
 
 Fumatrici is a qualitative encoded variable on nominal scale, with
 values 0 and 1. Value 0 means that the mother is not a smoker, while
-mothers with "Fumatrici" value of 1 means she is a smoker. <br>
+mothers with "Fumatrici" value of 1 means she is a smoker. 
 
 ```{r fumatrici_summary, echo=FALSE}
 fumatrici_gini_coeff <- round(gini.index(newborns_dataset$Fumatrici), 2)
@@ -190,7 +190,7 @@ grid.draw(arrangeGrob(smoker_plot, bottom = caption_text))
 
 Gestazione is a quantitative variable on ratio scale, measured in weeks,
 with position and standard deviation measures that can be seen in Table
-5. <br> As we expect, the mean value is around 40 weeks (38.98), with a
+5.  As we expect, the mean value is around 40 weeks (38.98), with a
 low standard deviation of 1.87 weeks.
 
 ::: {align="center"}
@@ -290,7 +290,7 @@ skew <- moments::skewness(newborns_dataset$Lunghezza)
 ### Cranio
 
 Cranio is a quantitative variable on ratio scale. Represents the cranium
-diameter of the newborn in millimeters. <br> In Table 8, we can observe
+diameter of the newborn in millimeters.  In Table 8, we can observe
 position measures and standard deviation for variable "Cranio".
 
 ::: {align="center"}
@@ -425,11 +425,12 @@ waiting the first baby. Another interesting result is obtained observing
 the class of age 0-15, where a consistent percentage of mothers are
 waiting for the second baby. However, the latter statistic is somewhat
 misleading, as the sample of mothers between the ages of 0 and 15 is
-obviously very small. <br> Computation of this statistic in general does
+obviously very small.  Computation of this statistic in general does
 not give us particular information. Therefore, we can proceed by
 observing the type of childbirth, subordinate to the age and the fact
-that mother smokes or not. <br> From Figure
-`r figure.Number <- figure.Number +1; figure.Number`, we can note that
+that mother smokes or not. 
+
+From Figure `r figure.Number <- figure.Number +1; figure.Number`, we can note that
 until the range 26-30, there seems to be no impact for smoker mothers
 with respect to non smoker mothers. On the other hand, as age passing,
 we note that the number of caesarean births decreases if the mother is a
@@ -770,7 +771,7 @@ null hypothesis has been rejected. This could be caused by the low
 standard deviation (and consequently variance), which cause the sample
 to be distorted but precise, and the proof is given by another Wilcoxon
 test for Lunghezza, considering only measures of Lunghezza inside the
-interquartile range, which provide the same result. <br>
+interquartile range, which provide the same result. 
 
 ``` {r test_hyp_hospital, results='asis', fig.align='center', echo=FALSE, include=FALSE}
 chi_square_test_result <- chisq.test(newborns_dataset$Tipo.parto, newborns_dataset$Ospedale)
@@ -812,23 +813,99 @@ p-value of 1 comparing hospitals. This means that the percentage of caesarean
 section is the same for all the hospitals, and there is no hospital in which
 this percentage is higher than the others.
 
-## Part 2: Generalized Linear Models
+## Part 2: Generalized Linear Models (Point 1)
 In this part we will use the dataset `newborns_dataset` to want to build a model
 to predict the weight of a newborn, using the other variables of the dataset.
 The first thing we want to do is to investigate the relationship between the
-weight of a newborn and the other variables. To do this, we use a scatterplot.
-```{r scatterplot, results='asis', fig.align='center', echo=FALSE, fig.height=7, fig.width=7}
-scatterplot(Peso ~ Gestazione, data = newborns_dataset, smooth = FALSE, main = "Scatterplot of weight and the other variables")
+weight of a newborn and the other variables. We can investigate this relashionship
+both numerically, by using covariance and coefficient of linear correlation and 
+graphically by means of scatterplots.
+```{r scatterplot, results='asis', fig.align='center', echo=FALSE, fig.height=2.75, fig.width=5}
+par(mgp=c(2,1,0))
+scat_1 <- scatterplot(Peso ~ Gestazione, 
+            data = newborns_dataset, 
+            pch = 20, 
+            main = "Scatterplot of weight and pregnancy")
+
+scat_2 <- scatterplot(Peso ~ Lunghezza, 
+            data = newborns_dataset, 
+            smooth = FALSE, 
+            pch = 20,
+            main = "Scatterplot of weight and length")
+
+scat_3 <- scatterplot(Peso ~ Cranio, 
+            data = newborns_dataset, 
+            pch = 20,
+            smooth = FALSE,
+            main = "Scatterplot of weight and skull")
+
+scat_4 <- scatterplot(Peso ~ N.gravidanze, 
+            data = newborns_dataset, 
+            pch = 20, 
+            smooth = FALSE,
+            boxplots = FALSE,
+            main = "Scatterplot of weight and number of pregnancies")
+figure.Number <- figure.Number + 1
+caption_text <- sprintf("Figure %d: Scatterplots for weight, and other variables", figure.Number)
+caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
+grid.draw(arrangeGrob(scat_1, scat_2, scat_3, scat_4, bottom = caption_text, ncol = 2))
+
+w_g_cov <- cov(newborns_dataset$Peso, newborns_dataset$Gestazione)
+ro_w_g <-cor(newborns_dataset$Peso, newborns_dataset$Gestazione)
+
+w_l_cov <- cov(newborns_dataset$Peso, newborns_dataset$Lunghezza)
+ro_w_l <- cor(newborns_dataset$Peso, newborns_dataset$Lunghezza)
+
+w_s_cov <- cov(newborns_dataset$Peso, newborns_dataset$Cranio)
+ro_w_s <- cor(newborns_dataset$Peso, newborns_dataset$Cranio)
+
+w_ng_cov <- cov(newborns_dataset$Peso, newborns_dataset$N.gravidanze)
+ro_w_ng <- cor(newborns_dataset$Peso, newborns_dataset$N.gravidanze)
+
+```
+In Figure ```r figure.Number``` we can see the scatterplots of the weight of a newborn and the other variables.
+The scatterplot of the weight and pregnancy length shows a linear relationship, 
+with coefficient of linear correlation of `r round(ro_w_g, 2)`.
+The scatterplot of the weight and length of the newborn shows a linear relationship,
+with a coefficient of linear correlation of `r round(ro_w_l, 2)`.
+Similar result we can see in the scatterplot of the weight and the skull of the newborn,
+where the linear correlation coefficient is `r round(ro_w_s, 2)`.
+On the other hand, the scatterplot of the weight and the number of pregnancies shows
+an absence of relationship, with linear correlation coefficient of `r round(ro_w_ng, 2)`.  
+
+One final scatterplot matrix to resume the correlation between "Peso" and other
+variables of the dataset can be observed in Figure ```r figure.Number + 1```.
+```{r scatterplot_matrix ,  results='asis', fig.align='center', echo=FALSE, fig.height=6, fig.width=6}
+scat_matrix <- scatterplotMatrix(~Peso + Gestazione + Lunghezza + Cranio, data = newborns_dataset,pch = 20, main = "Scatterplot matrix")
+caption_text <- sprintf("Figure %d: Scatterplot matrix for weight, and variables", figure.Number)
+caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
+grid.draw(arrangeGrob(scat_matrix, bottom = caption_text, ncol = 2))
+```
+
+### Multiple linear regression model (Point 2)
+We want to build a multiple linear regression model to predict the weight of a newborn.
+The model we want to build is the following:
+$$
+Peso = \beta_0 + \beta_1 \cdot Gestazione + \beta_2 \cdot Lunghezza + \beta_3 \cdot Cranio + \beta_4 \cdot N.gravidanze + \beta_5 \cdot Fumatrici + \beta_6 \cdot Sesso + \beta_7 \cdot Ospedale + \epsilon
+$$
+where $\epsilon \sim N(0, \sigma^2)$. We can build this model by using the function
+`lm()` in R. The result of this model is the following:
+```{r linear_regression_model, results='asis', fig.align='center', echo=FALSE}
+linear_regression_model <- lm(Peso ~ Gestazione + Lunghezza + Cranio + N.gravidanze + Fumatrici + Sesso + Ospedale, data = newborns_dataset)
+summary_lm <- summary(linear_regression_model)
+
 
 ```
 
-```{r scatterplot_2, results='asis', fig.align='center', echo=FALSE, fig.height=3, fig.width=7}
-scatterplot(Peso ~ ., data = newborns_dataset, smooth = FALSE, span = 0.5, main = "Scatterplot of weight and the other variables", reg.line = list(method = "lm", col = "red"))
+```{r 3D_scatterplot ,  results='asis', fig.align='center', echo=FALSE, fig.height=6, fig.width=6}
+#newborns_dataset$Peso <- as.numeric(newborns_dataset$Peso)
+#newborns_dataset$Gestazione <- as.numeric(newborns_dataset$Gestazione)
+#newborns_dataset$Lunghezza <- as.numeric(newborns_dataset$Lunghezza)
 
-```
+# Plotting with scatter3d()
+#scatter3d(Peso ~ Gestazione + Lunghezza, data = newborns_dataset, 
+#               main = "3D scatterplot of weight, pregnancy and length")
 
-```{r scatterplot_3, results='asis', fig.align='center', echo=FALSE, fig.height=3, fig.width=7}
-scatterplot(Peso ~ ., data = newborns_dataset, smooth = FALSE, span = 0.5, main = "Scatterplot of weight and the other variables", reg.line = list(method = "lm", col = "red"), boxplots = "xy")
 
 ```
 
