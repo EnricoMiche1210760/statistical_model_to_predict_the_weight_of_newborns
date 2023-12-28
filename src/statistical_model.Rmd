@@ -52,6 +52,16 @@ compute.statistics <- function(observation)
   
 }
 
+panel.cor <- function(x, y, digits = 2, prefix = "", cex.cor, ...)
+{
+    par(usr = c(0, 1, 0, 1))
+    r <- abs(cor(x, y))
+    txt <- format(c(r, 0.123456789), digits = digits)[1]
+    txt <- paste0(prefix, txt)
+    if(missing(cex.cor)) cex.cor <- 0.8/strwidth(txt)
+    text(0.5, 0.5, txt, cex = cex.cor * r)
+}
+
 figure.Number = 0
 
 ```
@@ -709,13 +719,18 @@ grid.draw(arrangeGrob(qq_plot_peso, qq_plot_lunghezza, bottom = caption_text, nc
 
 ```
 
-We decided to compute Student T-test, exploiting the central limit
-theorem, and then the one sample Wilcoxon rank sum, to test the
+We decided to compute Student T-test, even if the Shapiro Wilk test for Normality, 
+shows that we have to reject the null hyphotesis, which means that the two 
+distributions are not normal.
+With T-test we also try the one sample Wilcoxon rank sum, to test the
 hypothesis reported before. With both test we have the same result,
 which is to not reject the null hypothesis for variable Peso, while to
 reject the null hypothesis for variable Lunghezza.
 
 ```{r test_hyp, results='asis', fig.align='center', echo=FALSE, fig.height=3, fig.width=7}
+
+shapiro_test_result_peso <- shapiro.test(newborns_dataset$Peso) #variabile non normale
+shapiro_test_result_lunghezza <- shapiro.test(newborns_dataset$Lunghezza) #variabile non normale
 
 #TEST T con criterio SOGLIA
 peso_t_test_result <- t.test(newborns_dataset$Peso, 
@@ -821,6 +836,7 @@ weight of a newborn and the other variables. We can investigate this relashionsh
 both numerically, by using covariance and coefficient of linear correlation and 
 graphically by means of scatterplots.
 ```{r scatterplot, results='asis', fig.align='center', echo=FALSE, fig.height=2.75, fig.width=5}
+
 par(mgp=c(2,1,0))
 scat_1 <- scatterplot(Peso ~ Gestazione, 
             data = newborns_dataset, 
@@ -863,7 +879,7 @@ w_ng_cov <- cov(newborns_dataset$Peso, newborns_dataset$N.gravidanze)
 ro_w_ng <- cor(newborns_dataset$Peso, newborns_dataset$N.gravidanze)
 
 ```
-In Figure ```r figure.Number``` we can see the scatterplots of the weight of a newborn and the other variables.
+In Figure `r figure.Number` we can see the scatterplots of the weight of a newborn and the other variables.
 The scatterplot of the weight and pregnancy length shows a linear relationship, 
 with coefficient of linear correlation of `r round(ro_w_g, 2)`.
 The scatterplot of the weight and length of the newborn shows a linear relationship,
@@ -873,47 +889,164 @@ where the linear correlation coefficient is `r round(ro_w_s, 2)`.
 On the other hand, the scatterplot of the weight and the number of pregnancies shows
 an absence of relationship, with linear correlation coefficient of `r round(ro_w_ng, 2)`.  
 
-One final scatterplot matrix to resume the correlation between "Peso" and other
-variables of the dataset can be observed in Figure ```r figure.Number + 1```.
-```{r scatterplot_matrix ,  results='asis', fig.align='center', echo=FALSE, fig.height=6, fig.width=6}
+A final scatterplot matrix to resume the correlation between "Peso" and other
+variables of the dataset can be observed in Figure `r figure.Number <- figure.Number + 1; figure.Number`.
+
+```{r scatterplot_matrix ,  results='asis', fig.align='center', echo=FALSE, fig.height=7, fig.width=7}
 scat_matrix <- scatterplotMatrix(~Peso + Gestazione + Lunghezza + Cranio, data = newborns_dataset,pch = 20, main = "Scatterplot matrix")
 caption_text <- sprintf("Figure %d: Scatterplot matrix for weight, and variables", figure.Number)
 caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
 grid.draw(arrangeGrob(scat_matrix, bottom = caption_text, ncol = 2))
 ```
 
-### Multiple linear regression model (Point 2)
+These correlations and scatterplots computed, show relationships between "Peso" 
+and other quantitative variables of the dataset. In order to investigate the 
+relationship between "Peso" and qualitative variables, we can use `pairs()` function.
+Adjusting the parameter of the function, we can obtain the graphic shown in Figure
+`r figure.Number <- figure.Number + 1; figure.Number`. 
+The figure shows a resume of the results obtained above, and the relashionship with
+variables "Sesso", "Fumatrici" and "Ospedale".
+
+```{r pairs ,  results='asis', fig.align='center', echo=FALSE, fig.height=7, fig.width=7}
+newborns_dataset <- read.csv("data/neonati.csv", sep = ",", stringsAsFactors = TRUE)
+newborns_dataset <- newborns_dataset[, c("Peso", "Gestazione", "Lunghezza", "Cranio", "N.gravidanze", "Sesso", "Fumatrici", "Anni.madre", "Ospedale", "Tipo.parto") ]
+corr_matrix_vals <- round(cor(newborns_dataset[, c("Peso", "Gestazione", "Lunghezza", "Cranio", "N.gravidanze")]), 2)
+
+correlation_matrix <- pairs(newborns_dataset, lower.panel = panel.cor, upper.panel = panel.smooth)
+caption_text <- sprintf("Figure %d: Correlation matrix for weight, and variables", figure.Number)
+caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
+grid.draw(arrangeGrob(correlation_matrix, bottom = caption_text, ncol = 2))
+```
+
+We can see that none of the variables have a really linear relashionship with 
+"Peso", and this could represent a problem for the linear regression model, 
+while the variables with the highest correlation are "Cranio" and "Lunghezza",
+as could be expected.
+
+### Multiple linear regression model (Point 2, 3)
+
 We want to build a multiple linear regression model to predict the weight of a newborn.
-The model we want to build is the following:
+The model we want to build is in 
 $$
-Peso = \beta_0 + \beta_1 \cdot Gestazione + \beta_2 \cdot Lunghezza + \beta_3 \cdot Cranio + \beta_4 \cdot N.gravidanze + \beta_5 \cdot Fumatrici + \beta_6 \cdot Sesso + \beta_7 \cdot Ospedale + \epsilon
-$$
+Peso = \beta_0 + \beta_1 \cdot Gestazione + \beta_2 \cdot Lunghezza + \beta_3 \cdot Cranio + \beta_4 \cdot N.gravidanze \ + \beta_5 \cdot Fumatrici + \beta_6 \cdot Sesso +$$
+$$ + \beta_7 \cdot Ospedale +\beta_8 \cdot Anni.madre + \epsilon $$
 where $\epsilon \sim N(0, \sigma^2)$. We can build this model by using the function
 `lm()` in R. The result of this model is the following:
 ```{r linear_regression_model, results='asis', fig.align='center', echo=FALSE}
-linear_regression_model <- lm(Peso ~ Gestazione + Lunghezza + Cranio + N.gravidanze + Fumatrici + Sesso + Ospedale, data = newborns_dataset)
+linear_regression_model <- lm(Peso ~ Gestazione + Lunghezza + Cranio + 
+                                N.gravidanze + Fumatrici + Sesso + Ospedale + Anni.madre + Tipo.parto, 
+                              data = newborns_dataset)
 summary_lm <- summary(linear_regression_model)
+knitr::kable(round(summary_lm$coefficients, 2), caption = "Coefficients of the linear regression model")
 
-
-```
-
-```{r 3D_scatterplot ,  results='asis', fig.align='center', echo=FALSE, fig.height=6, fig.width=6}
-#newborns_dataset$Peso <- as.numeric(newborns_dataset$Peso)
-#newborns_dataset$Gestazione <- as.numeric(newborns_dataset$Gestazione)
-#newborns_dataset$Lunghezza <- as.numeric(newborns_dataset$Lunghezza)
-
-# Plotting with scatter3d()
-#scatter3d(Peso ~ Gestazione + Lunghezza, data = newborns_dataset, 
-#               main = "3D scatterplot of weight, pregnancy and length")
 
 
 ```
+Gestazione, Lunghezza, Cranio, N.gravidanze, and Sesso are all
+statistically significant, with p-value less than 0.05. The adjusted $R^2$ is `r round(summary_lm$adj.r.squared, 2)`, which means that the model explains `r round(summary_lm$adj.r.squared * 100, 2)`% 
+of the variability of the weight of a newborn, which is not a quite good result.
+The F-statistic is `r round(summary_lm$fstatistic[1], 2)` with p-value 
+close to 0, which means that the model is statistically significant. 
 
-```{r investigation, results='asis', fig.align='center', echo=FALSE, fig.height=3, fig.width=7}
-#parte
+```{r linear_regression_models, results='asis', fig.align='center', echo=FALSE, fig.width=6}
+linear_regression_model_1 <- update(linear_regression_model, ~ . - Anni.madre)
+summary_lm_1 <- summary(linear_regression_model_1)
+
+linear_regression_model_2 <- update(linear_regression_model_1, ~ . - Ospedale)
+summary_lm_2 <- summary(linear_regression_model_2)
+
+linear_regression_model_3 <- update(linear_regression_model_2, ~ . - Fumatrici)
+summary_lm_3 <- summary(linear_regression_model_3)
+
+linear_regression_model_4 <- update(linear_regression_model_3, ~ . - N.gravidanze)
+summary_lm_4 <- summary(linear_regression_model_4)
+
+anova_test <- anova(linear_regression_model_4, linear_regression_model)
+bic_res <- BIC(linear_regression_model_4, linear_regression_model)
+vif_res <- car::vif(linear_regression_model_4)
+
+knitr::kable(round(summary_lm_4$coefficients, 2), caption = "Coefficients of the linear regression model (optimized)")
+
 ```
 
-```{r parte_2, results='asis', fig.align='center', echo=FALSE, fig.height=3, fig.width=7}
+The model in general is quite good, but certainly not excellent for testing our study objective in a professional context. We can try to improve it by removing some 
+variables, with the stepwise backward selection method, which allow to remove varibles
+with high p-value one at a time. We also could performe a mixed selection, but we
+prefered to simplify the model, as much as possible.
+We can try to remove the variable "Anni.madre", which is the variable with the 
+highest p-value. We obtain that the adjusted $R^2$ is `r round(summary_lm_1$adj.r.squared, 2)`,
+the same same as before.
+We then proceed to remove variables "Ospedale" and in the following step "Fumatrici". 
+Again we obtain that the adjusted $R^2$ is `r round(summary_lm_3$adj.r.squared, 2)`. 
+We finally proceed removing "N.gravidanze", obtaining once again the same the adjusted $R^2$.
+We decide to not remove variables "Sesso" and "Tipo.parto", both because they are
+significant variables and because they are control variables.
+We can check the validity of the model by using the function `anova()`, which
+compares models and provides the p-value of the F-statistic. The p-value is `r round(anova_test$Pr[1], 2)`, which means that the model is a bit improved.
+Moreover, we can check the BIC of the optimized model, which is `r round(bic_res[1], 2)`, better than the BIC of the previous model, which was `r round(bic_res[2], 2)`.
+Finally, we can check the VIF of the optimized model, which are all less than 5,
+which means that there is no multicollinearity problem.
 
+### Model interaction and no linear effects (Point 4)
+We can try to improve the model by adding some interaction terms. We can add
+the interaction term between "Gestazione" and "Lunghezza", and the interaction
+term between "Gestazione" and "Cranio". The result of the model is in the following table.
+
+```{r linear_regression_model_interaction, results='asis', fig.align='center', echo=FALSE}
+linear_regression_model_interaction <- lm(Peso ~ Gestazione + Lunghezza + Cranio + Sesso 
+                                          + Tipo.parto + Gestazione:Lunghezza + Gestazione:Cranio, 
+                              data = newborns_dataset)
+summary_lm_interaction <- summary(linear_regression_model_interaction)
+knitr::kable(round(summary_lm_interaction$coefficients, 2), caption = "Coefficients of the linear regression model with interaction terms")
 
 ```
+This model breaks the significance of variable "Cranio", and also the interaction 
+between "Gestazione" and "Lunghezza", seems to be not significant.
+We decide to remove interaction between Gestazione and Lunghezza, and we obtain the 
+result in the following table.
+```{r linear_regression_model_interaction_1, results='asis', fig.align='center', echo=FALSE}
+linear_regression_model_interaction_1 <- update(linear_regression_model_interaction, ~ . - Gestazione:Lunghezza)
+summary_lm_interaction_1 <- summary(linear_regression_model_interaction_1)
+knitr::kable(round(summary_lm_interaction_1$coefficients, 2), caption = "Coefficients of the linear regression model with interaction terms (optimized)")
+
+```
+The model is improved with respect to the previous one.
+We can check the validity of the model by using ANOVA and BIC, which provide us
+a very little improvement of the model.
+We finally can try to add non linear effects to the model, for example a 
+lograritmic effect of "Gestazione" and "Lunghezza". We opted for a logaritmic effect
+because the scatterplot of the variables seems to suggest a logaritmic effect.
+
+```{r linear_regression_model_interaction_2, results='asis', fig.align='center', echo=FALSE}
+linear_regression_model_interaction_2 <- update(linear_regression_model_interaction_1, ~ . + log(Gestazione) + log(Lunghezza))
+summary_lm_interaction_2 <- summary(linear_regression_model_interaction_2)
+
+knitr::kable(round(summary_lm_interaction_2$coefficients, 2), caption = "Coefficients of the linear regression model with interaction terms and non linear effects")
+```
+We obtained an $R^2$ adjusted of `r round(summary_lm_interaction_2$adj.r.squared, 2)`, which is a bit improved with respect to the previous model. Moreover we can see that we can remove the interaction
+term.
+```{r linear_regression_model_interaction_3, results='asis', fig.align='center', echo=FALSE}
+linear_regression_model_interaction_3 <- update(linear_regression_model_interaction_2, ~ . - Gestazione:Cranio)
+summary_lm_interaction_3 <- summary(linear_regression_model_interaction_3)
+anova_test_2 <- anova(linear_regression_model_interaction_3, linear_regression_model_4)
+bic_res_2 <- BIC(linear_regression_model_interaction_3, linear_regression_model_4)
+
+knitr::kable(round(summary_lm_interaction_2$coefficients, 2), caption = "Coefficients of the linear regression model with interaction terms and non linear effects (without Gestazione:Cranio")
+```
+In the upper table we have removed the interaction term. 
+We can observe that the model is improved with respect to the initial one, 
+and it is improved also with respect to the model selected before as reference.
+In fact,we obtained an adjusted $R^2$ of 
+`r round(summary_lm_interaction_3$adj.r.squared, 2)`, which 
+is a bit better than the adjusted $R^2$ of the previous model, which was 
+`r round(summary_lm_4$adj.r.squared, 2)`.
+Moreover the anova test provide a p-value very close to 0,
+which also means that the model is improved with respect to the previous one.
+Finally, the BIC of the model is lower than the BIC of the previous model, 
+which means that this is a better model.
+
+### TODO
+### ATTENZIONE AD ALCUNI ERRORI DI STAMPA SU BIC !!!!
+### TODO
+
+
