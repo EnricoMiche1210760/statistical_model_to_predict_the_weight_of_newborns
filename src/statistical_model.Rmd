@@ -982,11 +982,19 @@ We finally proceed removing "N.gravidanze", obtaining once again the same the ad
 We decide to not remove variables "Sesso" and "Tipo.parto", both because they are
 significant variables and because they are control variables.
 We can check the validity of the model by using the function `anova()`, which
-compares models and provides the p-value of the F-statistic. The p-value is `r round(anova_test$Pr[1], 2)`, which means that the model is a bit improved.
-Moreover, we can check the BIC of the optimized model, which is `r round(bic_res[1], 2)`, better than the BIC of the previous model, which was `r round(bic_res[2], 2)`.
+compares models and provides the p-value of the F-statistic. The p-value is 0.001, which means that the model is a bit improved.
+Moreover, we can check the BIC of the optimized model, which is 35223, better than the BIC of the previous model, which was 35242.
 Finally, we can check the VIF of the optimized model, which are all less than 5,
 which means that there is no multicollinearity problem.
 
+One last thing we can to is to repeat the same steps, using `stepAIC()` function,
+and check if we obtain the same results.
+The result obtained in this case, take into account also the variable "N.gravidanze", which
+is the second last model we computed.
+```{r stepwise_backward_selection, results='asis', fig.align='center', echo=FALSE}
+stepwise_backward_selection <- MASS::stepAIC(linear_regression_model, direction = "both",
+                                       k = log(nrow(newborns_dataset)))
+```
 ### Model interaction and no linear effects (Point 4)
 We can try to improve the model by adding some interaction terms. We can add
 the interaction term between "Gestazione" and "Lunghezza", and the interaction
@@ -1042,11 +1050,49 @@ is a bit better than the adjusted $R^2$ of the previous model, which was
 `r round(summary_lm_4$adj.r.squared, 2)`.
 Moreover the anova test provide a p-value very close to 0,
 which also means that the model is improved with respect to the previous one.
-Finally, the BIC of the model is lower than the BIC of the previous model, 
+Finally, the BIC of the model is 35119 lower than the BIC of the previous model (35222), 
 which means that this is a better model.
 
-### TODO
-### ATTENZIONE AD ALCUNI ERRORI DI STAMPA SU BIC !!!!
-### TODO
+### Residuals diagnostics (Point 5)
+We can check the residuals of the model by observing Figure `r figure.Number <- figure.Number + 1; figure.Number`.
+From the figure we can see that the residuals are not normally distributed and
+there is a problem of heteroschedasticity.
+```{r residuals_diagnostics, results='asis', fig.align='center', echo=FALSE, fig.width=8, fig.height=7}
+par(mgp = c(2, 1, 0), mfrow=c(2, 2))
+residuals <- plot(linear_regression_model_interaction_3)
+
+caption <- sprintf("Figure %d: Residuals of the linear regression model with interaction terms and non linear effects", figure.Number)
+caption <- textGrob(caption, gp = gpar(fontsize = 9), just = "center")
+grid.draw(arrangeGrob(residuals[[1]], residuals[[2]], residuals[[3]], residuals[[4]], bottom=caption, ncol=2))
+
+```
 
 
+```{r residuals_diagnostics_2, results='asis', fig.align='center', echo=FALSE}
+
+lev <- hatvalues(linear_regression_model_interaction_3)
+p <- sum(lev)
+soglia <- 2*p/nrow(newborns_dataset)
+plot(lev, pch = 19, xlab = "Index", ylab = "Leverage")
+abline(h = soglia, col = "red")
+
+lev[lev > soglia]
+
+plot(rstudent(linear_regression_model_interaction_3))
+abline(h=c(-2,2), col="red")
+
+car::outlierTest(linear_regression_model_interaction_3)
+
+```
+
+
+
+```{r goodness_of_model, results='asis', fig.align='center', echo=FALSE}
+library(lmtest)
+bptest(linear_regression_model_interaction_3)
+dwtest(linear_regression_model_interaction_3)
+shapiro.test(residuals(linear_regression_model_interaction_3))
+plot(density(residuals(linear_regression_model_interaction_3)))
+
+
+```
