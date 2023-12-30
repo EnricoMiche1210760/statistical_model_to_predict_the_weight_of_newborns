@@ -62,6 +62,10 @@ panel.cor <- function(x, y, digits = 2, prefix = "", cex.cor, ...)
     text(0.5, 0.5, txt, cex = cex.cor * r)
 }
 
+MSE<-function(y_oss,y_prev){
+  return(sum((y_oss-y_prev)^2)/length(y_prev))
+}
+
 figure.Number = 0
 
 ```
@@ -95,7 +99,7 @@ Gestazione, Peso, Lunghezza, Cranio, Tipo.parto, Ospedale and Sesso.
 ### Anni.madre
 
 Anni.madre is a quantitative variable on radio scale. In the dataset we
-have at least two outlayers, which can be found at rows 1152 and 1380,
+have at least two outliers, which can be found at rows 1152 and 1380,
 and report an age of 1 and 0, respectively. Computing position measures
 and standard deviation excluding those rows, we obtain:
 
@@ -103,14 +107,16 @@ and standard deviation excluding those rows, we obtain:
 ```{r anni_madre_summary, results='asis', echo=FALSE}
 min_val <- min(newborns_dataset$Anni.madre)
 line <- which(newborns_dataset$Anni.madre == min_val)
-anni_madre_without_outlayers <- newborns_dataset$Anni.madre[
+anni_madre_without_outliers <- newborns_dataset$Anni.madre[
     -c(line, which(newborns_dataset$Anni.madre == 1))]
 
-sigma.anni_madre <- round(sd(anni_madre_without_outlayers), 2)
+sigma.anni_madre <- round(sd(anni_madre_without_outliers), 2)
 
 df_sigma <- data.frame(std.dev = sigma.anni_madre)
 
-knitr::kable(t(c(round(summary(anni_madre_without_outlayers), 2), df_sigma)),
+newborns_dataset$Anni.madre <- replace(newborns_dataset$Anni.madre,newborns_dataset$Anni.madre<2,median(anni_madre_without_outliers))
+
+knitr::kable(t(c(round(summary(anni_madre_without_outliers), 2), df_sigma)),
     type="html", align='c', 
     caption = "Position measures and standard deviation for Anni.madre")
 ```
@@ -594,7 +600,7 @@ F_stats.cranio <- compute.statistics(dataframe_females$Cranio)
 
 With the support of Figure `r figure.Number` and Tables 8 and 9, we can
 see that IQR ranges for variable "Peso", are equal, while the total
-range is much wider for females, meaning that outlayers are move further
+range is much wider for females, meaning that outliers are move further
 away from the average value. Moreover this means that also the standard
 deviation is higher for females with respect to males.
 
@@ -910,6 +916,7 @@ variables "Sesso", "Fumatrici" and "Ospedale".
 ```{r pairs ,  results='asis', fig.align='center', echo=FALSE, fig.height=7, fig.width=7}
 newborns_dataset <- read.csv("data/neonati.csv", sep = ",", stringsAsFactors = TRUE)
 newborns_dataset <- newborns_dataset[, c("Peso", "Gestazione", "Lunghezza", "Cranio", "N.gravidanze", "Sesso", "Fumatrici", "Anni.madre", "Ospedale", "Tipo.parto") ]
+newborns_dataset$Anni.madre <- replace(newborns_dataset$Anni.madre,newborns_dataset$Anni.madre<2,median(anni_madre_without_outliers))
 corr_matrix_vals <- round(cor(newborns_dataset[, c("Peso", "Gestazione", "Lunghezza", "Cranio", "N.gravidanze")]), 2)
 
 correlation_matrix <- pairs(newborns_dataset, lower.panel = panel.cor, upper.panel = panel.smooth)
@@ -991,7 +998,7 @@ One last thing we can to is to repeat the same steps, using `stepAIC()` function
 and check if we obtain the same results.
 The result obtained in this case, take into account also the variable "N.gravidanze", which
 is the second last model we computed.
-```{r stepwise_backward_selection, results='asis', fig.align='center', echo=FALSE}
+```{r stepwise_backward_selection, results='asis', fig.align='center', echo=FALSE, include=FALSE}
 stepwise_backward_selection <- MASS::stepAIC(linear_regression_model, direction = "both",
                                        k = log(nrow(newborns_dataset)))
 ```
@@ -1000,7 +1007,7 @@ We can try to improve the model by adding some interaction terms. We can add
 the interaction term between "Gestazione" and "Lunghezza", and the interaction
 term between "Gestazione" and "Cranio". The result of the model is in the following table.
 
-```{r linear_regression_model_interaction, results='asis', fig.align='center', echo=FALSE}
+```{r linear_regression_model_interaction, results='asis', fig.align='center', fig.width=5, echo=FALSE }
 linear_regression_model_interaction <- lm(Peso ~ Gestazione + Lunghezza + Cranio + Sesso 
                                           + Tipo.parto + Gestazione:Lunghezza + Gestazione:Cranio, 
                               data = newborns_dataset)
@@ -1039,7 +1046,7 @@ summary_lm_interaction_3 <- summary(linear_regression_model_interaction_3)
 anova_test_2 <- anova(linear_regression_model_interaction_3, linear_regression_model_4)
 bic_res_2 <- BIC(linear_regression_model_interaction_3, linear_regression_model_4)
 
-knitr::kable(round(summary_lm_interaction_2$coefficients, 2), caption = "Coefficients of the linear regression model with interaction terms and non linear effects (without Gestazione:Cranio")
+knitr::kable(round(summary_lm_interaction_3$coefficients, 2), caption = "Coefficients of the linear regression model with interaction terms and non linear effects (without Gestazione:Cranio)")
 ```
 In the upper table we have removed the interaction term. 
 We can observe that the model is improved with respect to the initial one, 
@@ -1054,10 +1061,38 @@ Finally, the BIC of the model is 35119 lower than the BIC of the previous model 
 which means that this is a better model.
 
 ### Residuals diagnostics (Point 5)
+```{r residuals_diagnostics_0, results='asis', fig.align='center', fig.width = 3, fig.height= 3, echo=FALSE}
+
+residuals_lm <- residuals(linear_regression_model_interaction_3)
+shap_test_residuals <- shapiro.test(residuals_lm) #p-value molto piccolo, rifiuto l'ipotesi nulla di normalità
+bptest_result <- lmtest::bptest(linear_regression_model_interaction_3)
+dwtest_result <- lmtest::dwtest(linear_regression_model_interaction_3)
+```
 We can check the residuals of the model by observing Figure `r figure.Number <- figure.Number + 1; figure.Number`.
+Residuals have to respect the following conditions:
+1. they have to be normally distributed;
+
+2. they have to be centered around 0;
+
+3. they have to be homoschedastic;
+
+4. they have to be indipendent;
+
+5. they have to be linearly related to the predictors.
+
 From the figure we can see that the residuals are not normally distributed and
-there is a problem of heteroschedasticity.
-```{r residuals_diagnostics, results='asis', fig.align='center', echo=FALSE, fig.width=8, fig.height=7}
+there is a problem of heteroschedasticity. Moreover, we can see that the residuals
+are not linearly related to the predictors, because the residuals are not centered
+around 0. We have also some outliers, and leverage points.
+The proof, comes from the the Shapiro-Wilk test for check normality of the residuals, which
+provides us a p-value of `r round(shap_test_residuals$p.value, 2)`, which is less than 0.05
+and so we have to reject the null hypothesis of normality.
+The homoschedasticity of the residuals can be tested by using the Breusch-Pagan test,
+which provides us a p-value of `r round(lmtest::bptest(linear_regression_model_interaction_3)$p.value, 2)`, which is less than 0.05 and so we have to reject the null hypothesis of homoschedasticity.
+Finally, we can check the independence of the residuals by using the Durbin-Watson test,
+which provides us a p-value of `r round(lmtest::dwtest(linear_regression_model_interaction_3)$p.value, 2)`, which is higher than 0.05 and so we can accept the null hypothesis of independence.
+
+```{r residuals_diagnostics_1, results='asis', fig.align='center', echo=FALSE, fig.width=8, fig.height=7}
 par(mgp = c(2, 1, 0), mfrow=c(2, 2))
 residuals <- plot(linear_regression_model_interaction_3)
 
@@ -1066,33 +1101,115 @@ caption <- textGrob(caption, gp = gpar(fontsize = 9), just = "center")
 grid.draw(arrangeGrob(residuals[[1]], residuals[[2]], residuals[[3]], residuals[[4]], bottom=caption, ncol=2))
 
 ```
+On Figure `r figure.Number <- figure.Number + 1; figure.Number` we can see another 
+representation of residuals of the model. We can observe the distribution of the residuals,
+leverge points, outliers, and the Cook's distance. In particular we can count 93 leverage points,
+and 5 outliers.
+One of the observations to be removed is the one with the highest Cook's distance, which
+is the observation 1551 with a Cook's distance higher than 1.
 
+```{r residuals_diagnostics_2, results='asis', fig.align='center', fig.width = 7, fig.height= 3, echo=FALSE}
 
-```{r residuals_diagnostics_2, results='asis', fig.align='center', echo=FALSE}
+#skewness and kurthosis
+residuals_skewness <- moments::skewness(residuals_lm)
+residuals_kurtosis <- moments::kurtosis(residuals_lm) - 3
 
+#leverage
 lev <- hatvalues(linear_regression_model_interaction_3)
 p <- sum(lev)
 soglia <- 2*p/nrow(newborns_dataset)
-plot(lev, pch = 19, xlab = "Index", ylab = "Leverage")
+lev_over_soglia <- lev[lev > soglia]
+number_of_lev_over_soglia <-length(lev_over_soglia)
+
+#outliers
+outliers <- car::outlierTest(linear_regression_model_interaction_3)
+
+#distanza di cook
+cook <- cooks.distance(linear_regression_model_interaction_3)
+
+par(mgp = c(2, 1, 0), mfrow=c(1, 2))
+plot_density_residuals <- plot(density(residuals_lm), main = "")
+leverage_residuals <- plot(lev, pch = 16, xlab = "Index", ylab = "Leverage")
 abline(h = soglia, col = "red")
 
-lev[lev > soglia]
-
-plot(rstudent(linear_regression_model_interaction_3))
+studentized_residuals <- plot(rstudent(linear_regression_model_interaction_3), xlab = "Index", ylab = "Studentized residuals")
 abline(h=c(-2,2), col="red")
 
-car::outlierTest(linear_regression_model_interaction_3)
+cook_plot <- plot(cook, ylim = c(0,1.75)) 
 
+caption_text <- sprintf("Figure %d: Residuals distribution, leverages, outliers and cook distance", figure.Number)
+caption_text <- textGrob(caption_text, gp = gpar(fontsize = 9), just = "center")
+grid.draw(arrangeGrob(plot_density_residuals, leverage_residuals, studentized_residuals, cook_plot, 
+                      bottom = caption_text, ncol=2))
+```
+```{r remove_residuals, results='asis', fig.align='center', fig.width = 7, fig.height= 3, echo=FALSE}
+#remove outlier 1551
+dataset_without_outliers <- newborns_dataset[-1551,]
+linear_regression_model_without_outlier <- lm(Peso ~ Gestazione + Lunghezza + Cranio + Sesso 
+                                          + Tipo.parto + log(Gestazione) + log(Lunghezza), 
+                              data = dataset_without_outliers)
+summary_lm_without_outlier <- summary(linear_regression_model_without_outlier)
+  knitr::kable(round(summary_lm_without_outlier$coefficients, 2), caption = "Coefficients of the linear regression model without outlier 1551")
+```
+
+```{r remove_residuals_optimize_model, results='asis', fig.align='center', fig.width = 7, fig.height= 3, echo=FALSE}
+linear_regression_model_without_outlier_2 <- update(linear_regression_model_without_outlier, ~ . - log(Gestazione) + N.gravidanze)
+summary_lm_without_outlier_2 <- summary(linear_regression_model_without_outlier_2)
+  knitr::kable(round(summary_lm_without_outlier_2$coefficients, 2), caption = "Coefficients of the linear regression model without outlier 1551 (optimized)")
+  
+bp_test <- lmtest::bptest(linear_regression_model_without_outlier_2)
+dw_test <- lmtest::dwtest(linear_regression_model_without_outlier_2)
+```
+The model with the removed outlier does not change much, and the coefficients are
+almost the same. The only difference is that the coefficient of the variable `log(Gestazione)`
+breaks the significance threshold, and so we can remove it from the model.
+Moreover, the Breush-Pagan test provides a p-value of `r round(bp_test$p.value, 2)`, which is higher than 0.05 and so we can accept the null hypothesis of homoschedasticity, which in previous model was rejected.
+Finally, we added to the model the variable `N.gravidanze`, which is the number of pregnancies of the mother. This variable is significant, and so we can keep it in the model. This variable does not provides
+particular improvements, but it will be useful in the next steps.
+
+### Graphical representation of the model (Point 8)
+At this point, we can try to visualize the model. In order to make the visualization
+easier, we need to simplify the model, trying to don't loose the essential information.
+Therefore, we can divide dataset according to the newborns sex. Then, we choose other two variables between the predictors of our model which could be for example "Lunghezza" "Cranio" (since we can choose just x-y-z). 
+We obtain the 3D scatterplot in Figure `r figure.Number <- figure.Number + 1; figure.Number`.
+
+```{r 3d_scatterplot_model, results='asis', fig.align='center', fig.width = 7, fig.height= 7, echo=FALSE}
+colors <- c("pink","lightblue")
+colors <- colors[as.numeric(dataset_without_outliers$Sesso)]
+plot_3d <- scatterplot3d::scatterplot3d(dataset_without_outliers$Peso~dataset_without_outliers$Lunghezza+
+                                          dataset_without_outliers$Cranio, 
+                         color = colors, pch = 16, xlab = "Lunghezza (mm)", ylab = "Cranio (mm)", zlab = "Peso (g)")
+
+
+males <- filter(dataset_without_outliers, Sesso=="M")
+males_lm <- lm(Peso ~ Lunghezza + Cranio, data = males)
+males_lm_summary <- summary(males_lm)
+
+females <- filter(dataset_without_outliers, Sesso=="F")
+females_lm <- lm(Peso ~ Lunghezza + Cranio, data = females)
+females_lm_summary <- summary(females_lm)
+
+plot_3d$plane3d(males_lm, lty.box = "solid", col = "pink", lwd = 1.5)
+plot_3d$plane3d(females_lm, lty.box = "solid", col = "lightblue", lwd = 1.5)
+
+legend("top", legend = c("Female", "Male"), col = colors, pch = 16, inset = 0.05, bty = "n")
+
+mtext("Figure 20: 3D Scatterplot with Planes and Legend", side = 1, line = 3)
+
+
+```
+### Prediction of the model (Point 7)
+We want to conclude this project,by predicting a fetus weight. We know that the chosen mother is in her third pregnancy, that she will give birth at 39 weeks, and that the newborn is a female; we have no more information.
+Since our model supposes to have also lenght, cranium and type of birth, we can use mean values to give an estimate of these parameters, and without loosing of generality, we can suppose a natural birth.
+```{r prediction, results='asis', fig.align='center', fig.width = 7, fig.height= 3, echo=FALSE}
+#prediction
+prediction <- predict(linear_regression_model_without_outlier_2, 
+                      data.frame(Gestazione = 39, 
+                                 Lunghezza = mean(dataset_without_outliers$Lunghezza[dataset_without_outliers$Sesso == "F"]), 
+                                 Cranio = 
+                                   mean(dataset_without_outliers$Cranio[dataset_without_outliers$Sesso == "F"]), 
+                                 Sesso = "F", Tipo.parto = "Nat", N.gravidanze = 3),
+                      interval = "prediction")
 ```
 
 
-
-```{r goodness_of_model, results='asis', fig.align='center', echo=FALSE}
-library(lmtest)
-bptest(linear_regression_model_interaction_3)
-dwtest(linear_regression_model_interaction_3)
-shapiro.test(residuals(linear_regression_model_interaction_3))
-plot(density(residuals(linear_regression_model_interaction_3)))
-
-
-```
