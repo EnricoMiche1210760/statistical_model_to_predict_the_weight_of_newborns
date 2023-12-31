@@ -1,4 +1,4 @@
-# statistical_model_to_predict_the_weight_of_newborns
+# Statistical Model To Predict The Weight Of Newborns
 
 For this medical study, data collected from 3 hospitals, concerning 2500 newborns, were analysed.
 In particular, the following variables were noted:
