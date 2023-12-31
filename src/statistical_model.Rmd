@@ -67,7 +67,7 @@ MSE<-function(y_oss,y_prev){
 }
 
 figure.Number = 0
-
+table.Number = 0
 ```
 
 ## Introduction (Point 2)
@@ -77,8 +77,8 @@ weight of newborns. Our objective is to create a statistical model given
 the *neonati.csv* dataset that can be extended to the entire population.
  In particular we want to find out whether it is possible to predict
 the infant's weight at birth given all the other variables. In
-particular, one wants to study a relationship with the mother's
-variables, to find out whether or not these have a not have a
+particular, we want to study a relationship with the mother's
+variables, to find out whether or not these have or not have a
 significant effect, such as the potentially harmful effect of smoking.
 The length and diameter of the infant's skull are also used because they
 can be estimated already from ultrasound scans, but in general they
@@ -90,18 +90,20 @@ knitr::kable(head(newborns_dataset), type = "latex", align='c', booktabs = TRUE,
     caption = "Dataset first rows")
 ```
 
-## Dataset (Points 1, 2, 3)
+## Part 1: Dataset (Points 1, 2, 3)
 
 The dataset is composed by 2500 samples and, studying its first rows, we
-can distinguish 10 variables: Anni.madre, N.gravidanze, Fumatrici,
-Gestazione, Peso, Lunghezza, Cranio, Tipo.parto, Ospedale and Sesso.
+can distinguish 10 variables: Anni.madre (age of mother), N.gravidanze (pregnancy number), Fumatrici (smoker),
+Gestazione (gestation), Peso (weight), Lunghezza (length), Cranio (skull), Tipo.parto (birth type), Ospedale (hospital) and Sesso (sex).
+For convenience we will call the variables by the name contained in the dataset even if in Italian.
 
 ### Anni.madre
 
 Anni.madre is a quantitative variable on radio scale. In the dataset we
-have at least two outliers, which can be found at rows 1152 and 1380,
-and report an age of 1 and 0, respectively. Computing position measures
-and standard deviation excluding those rows, we obtain:
+have two samples with an incorrect age reported, which can be found at rows 1152 and 1380,
+and report an age of 1 and 0, respectively. Since the other data seems correctly given, we can
+assume that these are errors and we can replace them with the median value of age.
+Computing position measures and standard deviation, we obtain:
 
 ::: {align="center"}
 ```{r anni_madre_summary, results='asis', echo=FALSE}
@@ -110,13 +112,13 @@ line <- which(newborns_dataset$Anni.madre == min_val)
 anni_madre_without_outliers <- newborns_dataset$Anni.madre[
     -c(line, which(newborns_dataset$Anni.madre == 1))]
 
-sigma.anni_madre <- round(sd(anni_madre_without_outliers), 2)
+newborns_dataset$Anni.madre <- replace(newborns_dataset$Anni.madre,newborns_dataset$Anni.madre<2,median(anni_madre_without_outliers))
+
+sigma.anni_madre <- round(sd(newborns_dataset$Anni.madre), 2)
 
 df_sigma <- data.frame(std.dev = sigma.anni_madre)
 
-newborns_dataset$Anni.madre <- replace(newborns_dataset$Anni.madre,newborns_dataset$Anni.madre<2,median(anni_madre_without_outliers))
-
-knitr::kable(t(c(round(summary(anni_madre_without_outliers), 2), df_sigma)),
+knitr::kable(t(c(round(summary(newborns_dataset$Anni.madre), 2), df_sigma)),
     type="html", align='c', 
     caption = "Position measures and standard deviation for Anni.madre")
 ```
@@ -125,7 +127,7 @@ knitr::kable(t(c(round(summary(anni_madre_without_outliers), 2), df_sigma)),
 ### N.gravidanze
 
 N.gravidanze is a quantitative variable on ratio scale, which represents
-the number of pregnancies per mother. In Table 3 position measures and
+the number of pregnancies per mother. In Table `r table.Number <- 3; table.Number` position measures and
 standard deviation for the variable are shown. We can see that mean
 and standard deviation and third interquartile are around 1 (0.98, 1.28
 and 1 respectively), while the maximum reaches a value of 12.
@@ -206,7 +208,7 @@ grid.draw(arrangeGrob(smoker_plot, bottom = caption_text))
 
 Gestazione is a quantitative variable on ratio scale, measured in weeks,
 with position and standard deviation measures that can be seen in Table
-5.  As we expect, the mean value is around 40 weeks (38.98), with a
+`r table.Number = table.Number + 1 ; table.Number`.  As we expect, the mean value is around 40 weeks (38.98), with a
 low standard deviation of 1.87 weeks.
 
 ::: {align="center"}
@@ -226,7 +228,7 @@ knitr::kable(t(c(round(summary(newborns_dataset$Gestazione), 2), df_sigma)),
 
 Peso is a quantitative variable on ratio scale, and represents the
 weight of newborns in grams. Position measures and standard deviation
-are observable in Table 6.
+are observable in Table `r table.Number = table.Number + 1 ; table.Number`.
 
 ::: {align="center"}
 ```{r peso_summary, results='asis', echo=FALSE}
@@ -306,7 +308,7 @@ skew <- moments::skewness(newborns_dataset$Lunghezza)
 ### Cranio
 
 Cranio is a quantitative variable on ratio scale. Represents the cranium
-diameter of the newborn in millimeters.  In Table 8, we can observe
+diameter of the newborn in millimeters.  In Table `r table.Number = table.Number + 2 ; table.Number`, we can observe
 position measures and standard deviation for variable "Cranio".
 
 ::: {align="center"}
@@ -598,8 +600,9 @@ F_stats.lunghezza <- compute.statistics(dataframe_females$Lunghezza)
 F_stats.cranio <- compute.statistics(dataframe_females$Cranio)
 ```
 
-With the support of Figure `r figure.Number` and Tables 8 and 9, we can
-see that IQR ranges for variable "Peso", are equal, while the total
+With the support of Figure `r figure.Number` and Tables 
+`r table.Number = table.Number + 1 ; table.Number` and `r table.Number = table.Number + 1 ; table.Number`, 
+we can see that IQR ranges for variable "Peso", are equal, while the total
 range is much wider for females, meaning that outliers are move further
 away from the average value. Moreover this means that also the standard
 deviation is higher for females with respect to males.
@@ -614,7 +617,8 @@ knitr::kable(t(F_stats.peso),
     caption = "Statistics for Peso (females)")
 ```
 
-Differently in Tables 10 and 11, we can see that IQR ranges, standard
+Differently in Tables `r table.Number = table.Number + 1 ; table.Number` and 
+`r table.Number = table.Number + 1 ; table.Number`, we can see that IQR ranges, standard
 deviation, mean and median for variable "Lunghezza", are quite similar.
 However, the total range is still a bit wider in females.
 
@@ -627,7 +631,8 @@ knitr::kable(t(F_stats.lunghezza),
     caption = "Statistics for Lunghezza (females)")
 ```
 
-Finally for variable "Cranio" (Tables 12 and 13, Figure
+Finally for variable "Cranio" (Tables `r table.Number = table.Number + 1 ; table.Number` and 
+`r table.Number = table.Number + 1 ; table.Number`, Figure
 `r figure.Number`c), shows results comparable to the variable
 "Lunghezza".
 
@@ -1018,7 +1023,7 @@ knitr::kable(round(summary_lm_interaction$coefficients, 2), caption = "Coefficie
 This model breaks the significance of variable "Cranio", and also the interaction 
 between "Gestazione" and "Lunghezza", seems to be not significant.
 We decide to remove interaction between Gestazione and Lunghezza, and we obtain the 
-result in the following table.
+result in Table `r table.Number = 17; table.Number`.
 ```{r linear_regression_model_interaction_1, results='asis', fig.align='center', echo=FALSE}
 linear_regression_model_interaction_1 <- update(linear_regression_model_interaction, ~ . - Gestazione:Lunghezza)
 summary_lm_interaction_1 <- summary(linear_regression_model_interaction_1)
@@ -1030,7 +1035,7 @@ We can check the validity of the model by using ANOVA and BIC, which provide us
 a very little improvement of the model.
 We finally can try to add non linear effects to the model, for example a 
 lograritmic effect of "Gestazione" and "Lunghezza". We opted for a logaritmic effect
-because the scatterplot of the variables seems to suggest a logaritmic effect.
+because the scatterplot of the variables seems to suggest a logaritmic effect (Table `r table.Number = table.Number + 1 ; table.Number`).
 
 ```{r linear_regression_model_interaction_2, results='asis', fig.align='center', echo=FALSE}
 linear_regression_model_interaction_2 <- update(linear_regression_model_interaction_1, ~ . + log(Gestazione) + log(Lunghezza))
@@ -1048,7 +1053,7 @@ bic_res_2 <- BIC(linear_regression_model_interaction_3, linear_regression_model_
 
 knitr::kable(round(summary_lm_interaction_3$coefficients, 2), caption = "Coefficients of the linear regression model with interaction terms and non linear effects (without Gestazione:Cranio)")
 ```
-In the upper table we have removed the interaction term. 
+In the upper table (Table `r table.Number = 19 ; table.Number`) we have removed the interaction term. 
 We can observe that the model is improved with respect to the initial one, 
 and it is improved also with respect to the model selected before as reference.
 In fact,we obtained an adjusted $R^2$ of 
@@ -1082,8 +1087,8 @@ Residuals have to respect the following conditions:
 
 From the figure we can see that the residuals are not normally distributed and
 there is a problem of heteroschedasticity. Moreover, we can see that the residuals
-are not linearly related to the predictors, because the residuals are not centered
-around 0. We have also some outliers, and leverage points.
+are not linearly related to the predictors, because the residuals have a shape around zero.
+We have also some outliers, and leverage points.
 The proof, comes from the the Shapiro-Wilk test for check normality of the residuals, which
 provides us a p-value of `r round(shap_test_residuals$p.value, 2)`, which is less than 0.05
 and so we have to reject the null hypothesis of normality.
@@ -1166,12 +1171,35 @@ breaks the significance threshold, and so we can remove it from the model.
 Moreover, the Breush-Pagan test provides a p-value of `r round(bp_test$p.value, 2)`, which is higher than 0.05 and so we can accept the null hypothesis of homoschedasticity, which in previous model was rejected.
 Finally, we added to the model the variable `N.gravidanze`, which is the number of pregnancies of the mother. This variable is significant, and so we can keep it in the model. This variable does not provides
 particular improvements, but it will be useful in the next steps.
+The final model we choose is the one with predictors in Table `r table.Number = 21 ; table.Number`.
 
 ### Graphical representation of the model (Point 8)
 At this point, we can try to visualize the model. In order to make the visualization
 easier, we need to simplify the model, trying to don't loose the essential information.
 Therefore, we can divide dataset according to the newborns sex. Then, we choose other two variables between the predictors of our model which could be for example "Lunghezza" "Cranio" (since we can choose just x-y-z). 
 We obtain the 3D scatterplot in Figure `r figure.Number <- figure.Number + 1; figure.Number`.
+
+### Prediction of the model (Point 7, Point 6)
+We want to conclude this project,by predicting a fetus weight. We know that the chosen mother is in her third pregnancy, that she will give birth at 39 weeks, and that the newborn is a female; we have no more information.
+Since our model supposes to have also length, cranium and type of birth, we can use mean values to give an estimate of these parameters, and without loosing of generality, we can suppose a natural birth (in `R` code, you can find also the prediction in case of caesarean birth).
+```{r prediction, results='asis', fig.align='center', fig.width = 7, fig.height= 3, echo=FALSE}
+prediction <- predict(linear_regression_model_without_outlier_2, 
+                      data.frame(Gestazione = 39, 
+                                 Lunghezza = mean(dataset_without_outliers$Lunghezza[dataset_without_outliers$Sesso == "F"]), 
+                                 Cranio = 
+                                   mean(dataset_without_outliers$Cranio[dataset_without_outliers$Sesso == "F"]), 
+                                 Sesso = "F", Tipo.parto = "Nat", N.gravidanze = 3),
+                      interval = "prediction")
+prediction_2 <- predict(linear_regression_model_without_outlier_2, 
+                      data.frame(Gestazione = 39, 
+                                 Lunghezza = mean(dataset_without_outliers$Lunghezza[dataset_without_outliers$Sesso == "F"]), 
+                                 Cranio = 
+                                   mean(dataset_without_outliers$Cranio[dataset_without_outliers$Sesso == "F"]), 
+                                 Sesso = "F", Tipo.parto = "Ces", N.gravidanze = 3),
+                      interval = "prediction")
+```
+The predicted **weight is `r round(prediction[1], 2)` g, with a confidence interval of `r round(prediction[2], 2)` g and `r round(prediction[3], 2)` g**. 
+A good interval is important, because it gives us the possibility to know how much we can trust our prediction. This is a good result, since the mean weight of the newborn is 3.5 kg, which is inside the confidence interval. Therefore, **we can conclude that our model is good enough to predict the weight of a newborn**,  with a good approximation and with a quite narrow confidence interval.
 
 ```{r 3d_scatterplot_model, results='asis', fig.align='center', fig.width = 7, fig.height= 7, echo=FALSE}
 colors <- c("pink","lightblue")
@@ -1194,22 +1222,15 @@ plot_3d$plane3d(females_lm, lty.box = "solid", col = "lightblue", lwd = 1.5)
 
 legend("top", legend = c("Female", "Male"), col = colors, pch = 16, inset = 0.05, bty = "n")
 
-mtext("Figure 20: 3D Scatterplot with Planes and Legend", side = 1, line = 3)
+mtext("Figure 20: 3D Scatterplot with Planes and Legend", side = 1, line = 3, )
 
 
 ```
-### Prediction of the model (Point 7)
-We want to conclude this project,by predicting a fetus weight. We know that the chosen mother is in her third pregnancy, that she will give birth at 39 weeks, and that the newborn is a female; we have no more information.
-Since our model supposes to have also lenght, cranium and type of birth, we can use mean values to give an estimate of these parameters, and without loosing of generality, we can suppose a natural birth.
-```{r prediction, results='asis', fig.align='center', fig.width = 7, fig.height= 3, echo=FALSE}
-#prediction
-prediction <- predict(linear_regression_model_without_outlier_2, 
-                      data.frame(Gestazione = 39, 
-                                 Lunghezza = mean(dataset_without_outliers$Lunghezza[dataset_without_outliers$Sesso == "F"]), 
-                                 Cranio = 
-                                   mean(dataset_without_outliers$Cranio[dataset_without_outliers$Sesso == "F"]), 
-                                 Sesso = "F", Tipo.parto = "Nat", N.gravidanze = 3),
-                      interval = "prediction")
-```
-
-
+### Conclusions
+In this project we have analyzed a dataset of newborns, trying to find a model 
+which could predict the weight of a newborn. We have found a model which is good 
+enough to predict the weight of a newborn, with a good approximation and with a 
+quite narrow confidence interval. 
+Finally we tested our model trying to predict the weight of a female newborn,
+with a gestation of 39 weeks, and with mother on her third pregnancy.
+We obtained an estimate weight of `r round(prediction[1], 2)` g, with a confidence interval of `r round(prediction[2], 2)` g and `r round(prediction[3], 2)` g.
